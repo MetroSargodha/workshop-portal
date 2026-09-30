@@ -1,0 +1,1683 @@
+<!DOCTYPE html>
+<html lang="ur" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>یومیہ کارکردگی جدول — ورکشاپ ذمہ دار</title>
+<!-- ExcelJS is loaded on-demand (see loadExcelJS) only when the user actually exports, to keep initial page load fast -->
+<link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Nastaliq+Urdu:wght@700&family=Noto+Naskh+Arabic:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#241f19; --ink-soft:#6b6152; --ink-faint:#a89d88;
+    --paper:#faf6ee; --card:#ffffff; --line:#ece2cb; --line-soft:#f2ead9;
+    --green-950:#0a2e22; --green-900:#0e3d2c; --green-800:#125239; --green-700:#177049;
+    --green-600:#1f9160; --green-100:#e3f2e7; --green-50:#f2f8f1;
+    --gold-700:#8a6a1a; --gold-600:#b8933a; --gold-500:#cda94f; --gold-100:#f7ecd2;
+    --amber-600:#b45309; --red-600:#b91c1c; --red-100:#fdecea;
+    --font-display:'Noto Nastaliq Urdu','Jameel Noori Nastaleeq',serif;
+    --font-body:'Noto Naskh Arabic','Segoe UI',Tahoma,sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--paper); color:var(--ink);
+    font-family:var(--font-body);
+    line-height:1.8;
+    background-image:radial-gradient(circle at 100% 0%, rgba(23,112,73,.05), transparent 45%),
+                      radial-gradient(circle at 0% 100%, rgba(184,147,58,.06), transparent 40%);
+  }
+  .wrap{max-width:1040px; margin:0 auto; padding:22px 16px 70px;}
+
+  .header{
+    position:relative; background:linear-gradient(155deg,var(--green-950),var(--green-700) 85%);
+    border-radius:20px; padding:30px 20px 24px; margin-bottom:20px;
+    box-shadow:0 10px 30px -12px rgba(14,61,44,.5); text-align:center; overflow:hidden;
+  }
+  .header::before{
+    content:''; position:absolute; inset:0;
+    background-image:repeating-linear-gradient(135deg, rgba(255,255,255,.035) 0 2px, transparent 2px 22px);
+    pointer-events:none;
+  }
+  .header-mark{display:block; color:var(--gold-500); font-size:15px; letter-spacing:10px; margin-bottom:10px;}
+  .header h1{color:#fff; font-family:var(--font-display); font-size:24px; margin:0; font-weight:700;}
+  .header .header-sub{color:#cfe9da; margin:8px 0 0; font-size:13px; letter-spacing:.3px;}
+  .header-rule{width:120px; height:2px; margin:16px auto 0; background:linear-gradient(90deg,transparent,var(--gold-500),transparent); position:relative; z-index:1;}
+
+  .card{
+    background:var(--card); border:1px solid var(--line); border-radius:16px; padding:18px 20px;
+    margin-bottom:16px; box-shadow:0 1px 2px rgba(36,31,25,.04);
+  }
+  .grid{display:grid; gap:12px;}
+  .grid-4{grid-template-columns:repeat(4,1fr);}
+  .grid-3{grid-template-columns:repeat(3,1fr);}
+  .grid-6{grid-template-columns:repeat(6,1fr);}
+  @media(max-width:760px){.grid-4{grid-template-columns:repeat(2,1fr);} .grid-3{grid-template-columns:repeat(2,1fr);} .grid-6{grid-template-columns:repeat(2,1fr);}}
+
+  label.field{display:flex; flex-direction:column; gap:6px;}
+  .field span{font-size:12px; color:var(--ink-soft); text-align:right; font-weight:600;}
+  input, select, textarea{
+    border:1px solid var(--line); border-radius:10px; padding:10px 11px; font-size:14px;
+    text-align:right; font-family:inherit; background:#fff; color:var(--ink); width:100%;
+  }
+  input:focus, select:focus, textarea:focus{outline:none; border-color:var(--green-600); box-shadow:0 0 0 3px rgba(31,145,96,.14);}
+  input:disabled, select:disabled{background:var(--line-soft); color:var(--ink-soft); cursor:not-allowed;}
+
+  .toolbar{
+    display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:10px;
+    margin-bottom:16px; background:var(--card); border:1px solid var(--line); border-radius:14px; padding:12px 16px;
+  }
+  .toolbar-left, .toolbar-right{display:flex; align-items:center; gap:10px; flex-wrap:wrap;}
+  .btn{
+    display:inline-flex; align-items:center; gap:6px; background:var(--green-700); color:#fff; border:none;
+    border-radius:10px; padding:10px 18px; font-size:14px; font-weight:700; cursor:pointer; font-family:inherit;
+    transition:background .15s, transform .1s;
+  }
+  .btn:hover{background:var(--green-800);}
+  .btn:active{transform:scale(.98);}
+  .btn:disabled{background:var(--line-soft); color:var(--ink-faint); cursor:not-allowed;}
+  .btn.secondary{background:#efe9db; color:var(--green-800); border:1px solid var(--line);}
+  .btn.secondary:hover{background:#e6ddc4;}
+  .btn.danger{background:var(--red-100); color:var(--red-600); border:1px solid #f6c6c1;}
+  .btn.danger:hover{background:#fbdcd9;}
+  .btn.small{padding:7px 12px; font-size:12px; border-radius:9px;}
+  .muted{color:var(--ink-faint); font-size:13px;}
+  .save-tag{font-size:12px; color:var(--ink-faint); display:flex; align-items:center; gap:5px; font-weight:600;}
+  .save-tag.saved, .save-tag.synced{color:var(--green-700);}
+  .save-tag.warn{color:var(--amber-600);}
+
+  /* role switcher */
+  .role-switch{display:flex; flex-wrap:wrap; gap:8px; margin-bottom:14px;}
+  .role-btn{
+    flex:1; min-width:160px; background:var(--card); border:1px solid var(--line); border-radius:12px;
+    padding:11px 14px; cursor:pointer; font-family:inherit; font-size:13px; font-weight:700;
+    color:var(--ink-soft); text-align:center; transition:all .12s;
+  }
+  .role-btn.active{background:var(--green-700); color:#fff; border-color:var(--green-700); box-shadow:0 4px 14px -6px rgba(23,112,73,.6);}
+  .role-sub{display:flex; align-items:center; gap:10px; margin-top:10px; flex-wrap:wrap;}
+  .role-sub select{max-width:260px;}
+
+  .approve-banner{
+    background:linear-gradient(135deg,var(--green-800),var(--green-600)); color:#fff; border-radius:14px;
+    padding:14px 18px; margin-bottom:16px; display:flex; align-items:center; gap:10px; font-size:13px;
+    font-weight:600; box-shadow:0 6px 18px -8px rgba(14,61,44,.5); flex-wrap:wrap;
+  }
+  .approve-banner .big{font-size:15px; font-family:var(--font-display);}
+  .info-banner{
+    background:var(--gold-100); color:var(--gold-700); border:1px solid #ecd9a8; border-radius:14px;
+    padding:13px 18px; margin-bottom:16px; font-size:13px; font-weight:600; display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;
+  }
+  .plain-banner{
+    background:var(--line-soft); color:var(--ink-soft); border-radius:14px; padding:13px 18px;
+    margin-bottom:16px; font-size:13px; text-align:center;
+  }
+
+  /* districts setup */
+  .district-row{display:flex; gap:8px; align-items:center; margin-bottom:8px; flex-wrap:wrap;}
+  .district-row input{flex:1; min-width:110px;}
+  .district-remove{background:none; border:none; color:var(--red-600); font-size:20px; cursor:pointer; flex-shrink:0; width:30px; height:30px;}
+
+  .days-card{padding:8px 10px;}
+  .day-item{
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    padding:12px 10px; border-bottom:1px solid var(--line-soft); border-radius:10px;
+    transition:background .12s;
+  }
+  .day-item:last-child{border-bottom:none;}
+  .day-item:hover{background:var(--green-50);}
+  .day-item-main{display:flex; align-items:center; gap:12px; min-width:0;}
+  .day-num{
+    width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    font-weight:700; font-size:13px; background:var(--line-soft); color:var(--ink-faint); flex-shrink:0;
+    border:1px solid var(--line);
+  }
+  .day-num.is-filled{background:var(--green-700); color:#fff; border-color:var(--green-700);}
+  .day-num.is-pending{background:var(--gold-600); color:#fff; border-color:var(--gold-600);}
+  .day-num.is-auto{background:#4f46e5; color:#fff; border-color:#4f46e5;}
+  .day-num.is-holiday{background:#9ca3af; color:#fff; border-color:#9ca3af;}
+  .day-text{text-align:right; min-width:0;}
+  .day-text .d1{font-family:var(--font-display); font-size:15px; font-weight:700; color:var(--ink);}
+  .day-text .d1 i{font-style:normal; color:var(--ink-faint); margin:0 4px;}
+  .day-text .d2{font-size:12px; color:var(--ink-faint); margin-top:2px;}
+  .day-item-side{display:flex; align-items:center; gap:9px; flex-shrink:0;}
+  .status-pill{
+    font-size:11px; font-weight:700; padding:4px 10px; border-radius:999px;
+    background:var(--line-soft); color:var(--ink-faint); white-space:nowrap;
+  }
+  .status-pill.pending{background:var(--gold-100); color:var(--gold-700);}
+  .status-pill.signed{background:var(--green-100); color:var(--green-800);}
+  .status-pill.auto{background:#e0e7ff; color:#4338ca;}
+  .status-pill.holiday{background:#e5e7eb; color:#374151;}
+  @media(max-width:600px){ .status-pill{display:none;} .day-text .d2{display:none;} }
+
+  .summary-box{background:var(--green-50); border:1px solid var(--green-100); border-radius:12px; padding:12px 8px; text-align:center;}
+  .summary-box .lbl{font-size:11px; color:var(--ink-soft); font-weight:600;}
+  .summary-box .val{font-size:20px; font-weight:800; color:var(--green-800); margin-top:2px;}
+  h2.section-title{
+    font-family:var(--font-display); font-size:16px; font-weight:700; color:var(--green-900);
+    margin:0 0 14px; text-align:right; display:flex; align-items:center; gap:8px;
+  }
+  h2.section-title::before{content:''; width:5px; height:5px; border-radius:50%; background:var(--gold-500); flex-shrink:0;}
+
+  .loading{display:flex; align-items:center; justify-content:center; gap:8px; padding:70px 0; color:var(--ink-faint);}
+  .spin{width:16px; height:16px; border:2px solid var(--line); border-top-color:var(--green-600); border-radius:50%; animation:spin .7s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  .modal-overlay{
+    position:fixed; inset:0; background:rgba(15,25,20,.55); backdrop-filter:blur(2px);
+    display:flex; align-items:flex-end; justify-content:center; z-index:100; padding:0;
+    animation:fadeIn .15s ease;
+  }
+  @keyframes fadeIn{from{opacity:0;} to{opacity:1;}}
+  @media(min-width:640px){ .modal-overlay{align-items:center; padding:24px;} }
+  .modal-card{
+    background:var(--paper); width:100%; max-width:640px; max-height:92vh; overflow-y:auto;
+    border-radius:20px 20px 0 0; box-shadow:0 -8px 40px rgba(10,30,22,.25);
+    animation:slideUp .18s ease;
+  }
+  @media(min-width:640px){ .modal-card{border-radius:20px; animation:popIn .16s ease;} }
+  @keyframes slideUp{from{transform:translateY(24px); opacity:0;} to{transform:translateY(0); opacity:1;}}
+  @keyframes popIn{from{transform:scale(.97); opacity:0;} to{transform:scale(1); opacity:1;}}
+  .modal-card.wide{max-width:1100px;}
+  .modal-head{
+    position:sticky; top:0; z-index:2; background:linear-gradient(155deg,var(--green-950),var(--green-700) 85%);
+    color:#fff; padding:18px 18px 16px; border-radius:20px 20px 0 0; display:flex; align-items:flex-start; justify-content:space-between; gap:10px;
+  }
+  .modal-title{font-family:var(--font-display); font-size:17px; font-weight:700;}
+  .modal-sub{font-size:12px; color:#cfe9da; margin-top:4px;}
+  .modal-close{
+    background:rgba(255,255,255,.14); border:none; color:#fff; width:30px; height:30px; border-radius:50%;
+    font-size:18px; line-height:1; cursor:pointer; flex-shrink:0;
+  }
+  .modal-close:hover{background:rgba(255,255,255,.26);}
+  .modal-body{padding:18px;}
+  .modal-body .grid{margin-bottom:14px;}
+  .modal-foot{
+    position:sticky; bottom:0; background:var(--paper); border-top:1px solid var(--line);
+    padding:12px 18px; display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap;
+  }
+
+  .sig-wrap{display:flex; flex-direction:column; gap:6px; align-items:flex-end;}
+  .sig-pad{border:1.5px dashed var(--gold-500); border-radius:12px; background:#fff; touch-action:none; cursor:crosshair; width:100%; max-width:320px; height:110px;}
+  .sig-actions{display:flex; gap:8px; flex-wrap:wrap;}
+  .sig-label{font-size:12px; color:var(--ink-soft); text-align:right; font-weight:600; margin-bottom:2px;}
+  .sig-hint{font-size:11px; color:var(--ink-faint); margin-top:2px;}
+  .sig-preview{display:flex; flex-direction:column; align-items:flex-end; gap:6px;}
+  .sig-preview img{max-width:220px; max-height:90px; border:1px solid var(--line); border-radius:10px; background:#fff; padding:6px;}
+
+  .locked-note{
+    background:var(--green-50); border:1px dashed var(--green-100); border-radius:10px; padding:10px 12px;
+    font-size:12px; color:var(--green-800); text-align:right; display:flex; align-items:center; justify-content:space-between; gap:8px; flex-wrap:wrap;
+  }
+  .reject-note{background:var(--red-100); border:1px solid #f6c6c1; border-radius:10px; padding:10px 12px; font-size:12px; color:var(--red-600); text-align:right; margin-bottom:12px;}
+  .readonly-grid input{background:var(--line-soft); color:var(--ink-soft);}
+
+  .division-table-wrap{overflow-x:auto; border:1px solid var(--line); border-radius:12px; margin-bottom:16px;}
+  table.division-table{width:100%; border-collapse:collapse; font-size:12px; min-width:640px;}
+  table.division-table th, table.division-table td{border:1px solid var(--line); padding:8px 6px; text-align:center;}
+  table.division-table th{background:var(--green-100); color:var(--green-900);}
+  table.division-table tr.st-pending td{background:var(--gold-100);}
+  table.division-table tr.st-signed td{background:var(--green-50);}
+
+  .xp-scroll{overflow-x:auto; border:1px solid var(--line); border-radius:12px;}
+  table.xp-table{border-collapse:collapse; width:100%; min-width:1160px; font-size:11px;}
+  table.xp-table td{border:1px solid #e3dcc8; padding:6px 5px; text-align:center; white-space:nowrap; color:var(--ink);}
+  table.xp-table tr.xp-title td{background:var(--green-950); color:#fff; font-weight:700; font-size:13px; white-space:normal;}
+  table.xp-table tr.xp-info td{background:var(--green-700); color:#fff; font-weight:600;}
+  table.xp-table tr.xp-head td{background:var(--green-100); color:var(--green-900); font-weight:700; white-space:normal;}
+  table.xp-table tr.xp-band td{background:#fbf8f1;}
+  table.xp-table tr.xp-sub td{background:var(--gold-100); color:var(--gold-700); font-weight:700;}
+  table.xp-table img.xp-sig{max-height:24px; max-width:70px;}
+  .xp-note{font-size:12px; color:var(--ink-soft); margin-top:12px; text-align:right; line-height:1.8;}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+
+<script>
+(function(){
+  "use strict";
+
+  var URDU_MONTHS = ['جنوری','فروری','مارچ','اپریل','مئی','جون','جولائی','اگست','ستمبر','اکتوبر','نومبر','دسمبر'];
+  var EN_MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  var URDU_DAYS = ['اتوار','پیر','منگل','بدھ','جمعرات','جمعہ','ہفتہ'];
+
+  var FIELD_DEFS = [
+    { key:'boxesReceived', label:'بکس وصول کئے' },
+    { key:'generalRepair', label:'عمومی مرمت کئے' },
+    { key:'generalScrap', label:'عمومی سکریپ کئے' },
+    { key:'specialRepair', label:'خصوصی مرمت کئے' },
+    { key:'specialScrap', label:'خصوصی سکریپ کئے' },
+    { key:'lockRepair', label:'لاک مرمت کئے' }
+  ];
+
+  var EXTRA_FIELDS = [
+    { key:'otherWork', label:'دیگر کام کیے', type:'text' },
+    { key:'bagNumber', label:'بیگ نمبر', type:'text' },
+    { key:'fareKm', label:'کرایہ / کلومیٹر', type:'text' },
+    { key:'cityArea', label:'مخصوص علاقہ / محلہ', type:'text' },
+    { key:'departureTime', label:'وقت رخصت', type:'time' },
+    { key:'arrivalTime', label:'وقت آمد', type:'time' }
+  ];
+
+  var SUMMARY_FIELDS = [
+    { key:'totalSalary', label:'کل مشاہرہ' },
+    { key:'travelExpenses', label:'سفری اخراجات' },
+    { key:'outsideSchedule', label:'بیرونی جدول' },
+    { key:'dailyFikreMadina', label:'روزانہ فکر مدینہ' },
+    { key:'weeklyMuzakra', label:'ہفتہ وار مدنی مذاکرہ میں شرکت' },
+    { key:'weeklyIjtima', label:'ہفتہ وار اجتماع میں شرکت' },
+    { key:'madaniInaamat', label:'مدنی انعامات' },
+    { key:'totalLeaveDays', label:'کل ایام رخصت' },
+    { key:'totalAbsentDays', label:'کل ایام غیر حاضری' },
+    { key:'totalPresentDays', label:'کل ایام حاضری' }
+  ];
+
+  var MERGE_RANGES_TEMPLATE = [
+    'A1:Q1','E2:H2','I2:L2','M2:Q2','C3:D3','K3:Q3',
+    'A4:A5','B4:B5','C4:D4','E4:E5','F4:F5','G4:G5','H4:H5','I4:I5','J4:J5','K4:K5','L4:L5','M4:M5','N4:N5','O4:Q4',
+    'L37:Q37','A38:Q38',
+    'A39:A40','B39:D40','E39:E40','F39:F40','G39:G40','H39:H40','I39:I40','J39:L39','M39:N40','O39:P40','Q39:Q40',
+    'B41:D41','M41:N41','O41:P41','A42:M42','N42:Q42'
+  ];
+
+  var COLS = ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q'];
+
+  function daysInMonth(y,m){ return new Date(y,m,0).getDate(); }
+  function hijriLabel(date){
+    try{ return new Intl.DateTimeFormat('ar-SA-u-ca-islamic-umalqura-nu-latn',{day:'numeric',month:'long'}).format(date); }
+    catch(e){ return ''; }
+  }
+  function gregLabel(date){ return String(date.getDate()).padStart(2,'0') + ' ' + URDU_MONTHS[date.getMonth()]; }
+  function fmtDateTime(iso){
+    if(!iso) return '';
+    try{
+      var d = new Date(iso);
+      return String(d.getDate()).padStart(2,'0')+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+d.getFullYear()+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+    }catch(e){ return ''; }
+  }
+  function emptyEntry(){
+    var e = { officeSignature:'', hasSignature:false, district:'', officeSignedBy:'', officeSignedAt:'', officeNote:'', dayType:'' };
+    FIELD_DEFS.forEach(function(f){ e[f.key] = ''; });
+    EXTRA_FIELDS.forEach(function(f){ e[f.key] = ''; });
+    return e;
+  }
+  function emptySummary(){
+    var s = {};
+    SUMMARY_FIELDS.forEach(function(f){ s[f.key] = ''; });
+    return s;
+  }
+  function esc(v){
+    return String(v == null ? '' : v).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+  function genCode(){ return String(Math.floor(1000 + Math.random()*9000)); }
+  function dayTypeLabel(dt){ return dt === 'leave' ? 'رخصت' : (dt === 'qafila' ? 'مدنی قافلہ' : ''); }
+  function entryHasData(e){
+    if(!e) return false;
+    if(e.dayType === 'leave' || e.dayType === 'qafila') return true;
+    return FIELD_DEFS.concat(EXTRA_FIELDS).some(function(f){ return e[f.key] !== '' && e[f.key] != null; });
+  }
+  function isSunday(day){
+    if(!day) return false;
+    return new Date(state.year, state.month-1, day).getDay() === 0;
+  }
+  function entryStatus(e, day){
+    if(!e) e = emptyEntry();
+    if(e.dayType === 'leave' || e.dayType === 'qafila') return 'auto';
+    var hasRealData = !!e.district || FIELD_DEFS.concat(EXTRA_FIELDS).some(function(f){ return e[f.key] !== '' && e[f.key] != null; });
+    if(!hasRealData){
+      if(isSunday(day)) return 'holiday';
+      return 'empty';
+    }
+    if(!e.officeSignedAt) return 'pending';
+    return 'signed';
+  }
+  function statusLabel(st, dayType){
+    if(st === 'holiday') return '✓ ہفتہ وار تعطیل';
+    if(st === 'auto') return '✓ '+dayTypeLabel(dayType)+' (خودکار)';
+    return st === 'signed' ? '✓ دفتر سے تصدیق شدہ' : (st === 'pending' ? 'دفتر تصدیق کا منتظر' : 'نامکمل');
+  }
+  function districtOfficer(name){
+    var d = state.districts.find(function(x){ return x.name === name; });
+    return d ? d.officer : '';
+  }
+
+  // ---- storage abstraction: Claude artifact storage, else localStorage (for standalone use) ----
+  var hasClaudeStorage = (typeof window.storage !== 'undefined' && window.storage && typeof window.storage.get === 'function');
+  async function storageGet(key){
+    if(hasClaudeStorage){
+      try{ var r = await window.storage.get(key); return r ? r.value : null; }catch(e){ return null; }
+    }
+    try{ return localStorage.getItem('workshopPortal:'+key); }catch(e){ return null; }
+  }
+  async function storageSet(key, value){
+    if(hasClaudeStorage){
+      try{ await window.storage.set(key, value); return true; }catch(e){ return false; }
+    }
+    try{ localStorage.setItem('workshopPortal:'+key, value); return true; }catch(e){ return false; }
+  }
+
+  // ---- state ----
+  var state = {
+    year: 2026,
+    month: 7,
+    profile: { city:'', mobile:'', name:'', workshopCount:'' },
+    settings: { sheetUrl:'https://script.google.com/macros/s/AKfycbwXvcy7rSylCV6wu10qDe6H4mQFk4jdGt50dfq8q1y7VNc1qdxHElQoaxohe5QbqR2YwA/exec', superAdminUsername:'', superAdminPassword:'', workshopUsername:'', workshopPassword:'', divisionUsername:'', divisionPassword:'', divisionOfficeUsername:'', divisionOfficePassword:'' },
+    districts: [],
+    entries: {},
+    summary: emptySummary(),
+    division: { signedBy:'', signature:'', signedAt:'' },
+    loading: true,
+    saveState: 'idle',
+    entryModalDay: null,
+    entryModalMode: 'workshop',
+    showExcelPreview: false,
+    role: 'workshop',
+    activeDistrict: '',
+    roleLocked: false,
+    session: null,
+    loginError: '',
+    configLoaded: false
+  };
+  var saveTimer = null;
+  var loadedKey = '';
+
+  function monthKey(){ return 'month-' + state.year + '-' + String(state.month).padStart(2,'0'); }
+  function isMonthApproved(){ return !!(state.division && state.division.signedAt); }
+  function monthReadyForDivision(){
+    var nDays = daysInMonth(state.year, state.month);
+    var any = false;
+    for(var d=1; d<=nDays; d++){
+      var st = entryStatus(state.entries[d], d);
+      if(st === 'empty' || st === 'holiday') continue;
+      any = true;
+      if(st === 'pending') return false;
+    }
+    return any;
+  }
+  function pendingDivisionItems(){
+    var nDays = daysInMonth(state.year, state.month);
+    var items = [];
+    for(var d=1; d<=nDays; d++){
+      var e = state.entries[d];
+      if(entryStatus(e, d) === 'pending'){
+        var date = new Date(state.year, state.month-1, d);
+        items.push(gregLabel(date) + ' — ' + (e.district || '—'));
+      }
+    }
+    return items;
+  }
+  function filledDaysList(){
+    var nDays = daysInMonth(state.year, state.month);
+    var list = [];
+    for(var d=1; d<=nDays; d++){
+      var e = state.entries[d];
+      if(entryHasData(e)) list.push({ day:d, e:e, status:entryStatus(e, d) });
+    }
+    return list;
+  }
+
+  async function loadProfile(){
+    var cfg = await fetchFromSheet('config');
+    if(cfg){
+      if(cfg.profile) state.profile = cfg.profile;
+      if(cfg.districts) state.districts = cfg.districts;
+      if(cfg.settings) state.settings = Object.assign(state.settings, cfg.settings);
+      // keep the local cache fresh, but don't block on it — no network call needed here
+      storageSet('profile-info', JSON.stringify(state.profile));
+      storageSet('districts-info', JSON.stringify(state.districts));
+      storageSet('settings-info', JSON.stringify(state.settings));
+    } else {
+      try{ var v = await storageGet('profile-info'); if(v) state.profile = JSON.parse(v); }catch(e){}
+      try{ var ds = await storageGet('districts-info'); if(ds) state.districts = JSON.parse(ds); }catch(e){}
+      try{ var s = await storageGet('settings-info'); if(s) state.settings = Object.assign(state.settings, JSON.parse(s)); }catch(e){}
+    }
+    if(!state.settings.sheetUrl){
+      state.settings.sheetUrl = 'https://script.google.com/macros/s/AKfycbwXvcy7rSylCV6wu10qDe6H4mQFk4jdGt50dfq8q1y7VNc1qdxHElQoaxohe5QbqR2YwA/exec';
+    }
+    if(!cfg){ saveConfig(); } // nothing on the sheet yet (or offline) — push what we have in the background, don't block on it
+    resolveSession();
+    state.configLoaded = true;
+  }
+
+  function loadStoredSession(){
+    try{ var raw = localStorage.getItem('workshopPortal:session'); if(raw) return JSON.parse(raw); }catch(e){}
+    return null;
+  }
+  function saveStoredSession(sess){ try{ localStorage.setItem('workshopPortal:session', JSON.stringify(sess)); }catch(e){} }
+  function clearStoredSession(){ try{ localStorage.removeItem('workshopPortal:session'); }catch(e){} }
+
+  function validateSession(sess){
+    if(!sess) return null;
+    if(sess.type === 'superadmin'){
+      return (state.settings.superAdminUsername && sess.username === state.settings.superAdminUsername) ? sess : null;
+    }
+    if(sess.type === 'workshop'){
+      return (state.settings.workshopUsername && sess.username === state.settings.workshopUsername) ? sess : null;
+    }
+    if(sess.type === 'division'){
+      return (state.settings.divisionUsername && sess.username === state.settings.divisionUsername) ? sess : null;
+    }
+    if(sess.type === 'divisionOffice'){
+      return (state.settings.divisionOfficeUsername && sess.username === state.settings.divisionOfficeUsername) ? sess : null;
+    }
+    if(sess.type === 'office'){
+      var d = state.districts.find(function(x){ return x.username && x.username === sess.username && x.name === sess.district; });
+      return d ? sess : null;
+    }
+    return null;
+  }
+
+  function applySession(sess){
+    state.session = sess;
+    state.roleLocked = true;
+    if(sess.type === 'superadmin'){ state.role = 'admin'; state.activeDistrict = ''; }
+    else if(sess.type === 'workshop'){ state.role = 'workshop'; state.activeDistrict = ''; }
+    else if(sess.type === 'division'){ state.role = 'division'; state.activeDistrict = ''; }
+    else if(sess.type === 'divisionOffice'){ state.role = 'monitor'; state.activeDistrict = ''; }
+    else if(sess.type === 'office'){ state.role = 'office'; state.activeDistrict = sess.district; }
+  }
+
+  function resolveSession(){
+    // first-run bootstrap: no super-admin account configured yet -> let the first person in set one up
+    if(!state.settings.superAdminUsername){
+      applySession({ type:'superadmin', username:'' });
+      return;
+    }
+    var stored = validateSession(loadStoredSession());
+    if(stored){ applySession(stored); }
+    else { clearStoredSession(); state.session = null; }
+  }
+
+  async function attemptLogin(username, password){
+    username = (username||'').trim();
+    password = (password||'').trim();
+    if(!username || !password){ state.loginError = 'یوزرنیم اور پاسورڈ درج کریں۔'; render(); return; }
+
+    if(state.settings.superAdminUsername && username === state.settings.superAdminUsername && password === state.settings.superAdminPassword){
+      var s0 = { type:'superadmin', username: username }; saveStoredSession(s0); applySession(s0); state.loginError=''; state.loading=false; render(); return;
+    }
+    if(state.settings.workshopUsername && username === state.settings.workshopUsername && password === state.settings.workshopPassword){
+      var s1 = { type:'workshop', username: username }; saveStoredSession(s1); applySession(s1); state.loginError=''; await loadMonth(); return;
+    }
+    if(state.settings.divisionUsername && username === state.settings.divisionUsername && password === state.settings.divisionPassword){
+      var s2 = { type:'division', username: username }; saveStoredSession(s2); applySession(s2); state.loginError=''; await loadMonth(); return;
+    }
+    if(state.settings.divisionOfficeUsername && username === state.settings.divisionOfficeUsername && password === state.settings.divisionOfficePassword){
+      var s2b = { type:'divisionOffice', username: username }; saveStoredSession(s2b); applySession(s2b); state.loginError=''; await loadMonth(); return;
+    }
+    var d = state.districts.find(function(x){ return x.username && x.username === username && x.password === password; });
+    if(d){
+      var s3 = { type:'office', username: username, district: d.name }; saveStoredSession(s3); applySession(s3); state.loginError=''; await loadMonth(); return;
+    }
+    state.loginError = 'غلط یوزرنیم یا پاسورڈ۔';
+    render();
+  }
+
+  function handleLogout(){
+    clearStoredSession();
+    state.session = null; state.role = 'workshop'; state.roleLocked = false; state.activeDistrict = '';
+    render();
+  }
+
+  var configSaveTimer = null;
+  function scheduleConfigSave(){
+    if(configSaveTimer) clearTimeout(configSaveTimer);
+    configSaveTimer = setTimeout(saveConfig, 500);
+  }
+  async function saveConfig(){
+    await storageSet('profile-info', JSON.stringify(state.profile));
+    await storageSet('districts-info', JSON.stringify(state.districts));
+    await storageSet('settings-info', JSON.stringify(state.settings));
+    if(state.settings.sheetUrl){
+      try{
+        await fetch(state.settings.sheetUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({ month: 'config', json: JSON.stringify({ profile: state.profile, districts: state.districts, settings: state.settings }) })
+        });
+      }catch(e){}
+    }
+  }
+
+  async function fetchFromSheet(key){
+    if(!state.settings.sheetUrl) return null;
+    try{
+      var resp = await fetch(state.settings.sheetUrl + '?month=' + encodeURIComponent(key));
+      var j = await resp.json();
+      if(j && j.found && j.json) return JSON.parse(j.json);
+    }catch(e){}
+    return null;
+  }
+  async function loadMonth(preRemote, preLocalRaw){
+    state.loading = true;
+    render();
+    var key = monthKey();
+
+    if(saveTimer){
+      clearTimeout(saveTimer);
+      saveTimer = null;
+      if(loadedKey && loadedKey !== key){
+        try{ await storageSet(loadedKey, JSON.stringify({ entries: state.entries, summary: state.summary, division: state.division })); }catch(e){}
+      }
+    }
+
+    var pair = (preRemote !== undefined)
+      ? await Promise.all([preRemote, preLocalRaw])
+      : await Promise.all([fetchFromSheet(key), storageGet(key)]); // run network + local lookup together, not one after another
+    var remote = pair[0], localRaw = pair[1];
+    var local = null;
+    if(localRaw){ try{ local = JSON.parse(localRaw); }catch(e){ local = null; } }
+
+    var data = remote || local;
+    state.entries = (data && data.entries) || {};
+    state.summary = Object.assign(emptySummary(), (data && data.summary) || {});
+    state.division = Object.assign({ signedBy:'', signature:'', signedAt:'', hasSignature:false }, (data && data.division) || {});
+    Object.keys(state.entries).forEach(function(d){
+      state.entries[d] = Object.assign(emptyEntry(), state.entries[d]);
+    });
+
+    loadedKey = key;
+    state.loading = false;
+    render();
+  }
+
+  function scheduleSave(){
+    state.saveState = 'saving';
+    renderSaveTagOnly();
+    if(saveTimer) clearTimeout(saveTimer);
+    var key = monthKey();
+    saveTimer = setTimeout(async function(){
+      var payload = JSON.stringify({ entries: state.entries, summary: state.summary, division: state.division });
+      await storageSet(key, payload); // always saved locally first — this device's own view/export never depends on the network
+      state.saveState = 'saved';
+      renderSaveTagOnly();
+      if(state.settings.sheetUrl){
+        if(payload.length > 45000){
+          state.saveState = 'too-large';
+          renderSaveTagOnly();
+          return;
+        }
+        state.saveState = 'syncing';
+        renderSaveTagOnly();
+        try{
+          await fetch(state.settings.sheetUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({ month: key, json: payload })
+          });
+          state.saveState = 'synced';
+        }catch(e){ state.saveState = 'sync-error'; }
+        renderSaveTagOnly();
+      }
+    }, 600);
+  }
+
+
+
+  function updateEntry(day, key, value){
+    if(!state.entries[day]) state.entries[day] = emptyEntry();
+    state.entries[day][key] = value;
+    scheduleSave();
+  }
+  function updateSummary(key, value){ state.summary[key] = value; scheduleSave(); }
+  function updateDivisionField(key, value){ state.division[key] = value; scheduleSave(); }
+
+  function computeSubtotals(){
+    var nDays = daysInMonth(state.year, state.month);
+    var subtotals = {};
+    FIELD_DEFS.forEach(function(f){
+      var sum = 0;
+      for(var d=1; d<=nDays; d++){
+        var e = state.entries[d];
+        var n = parseFloat(e ? e[f.key] : '');
+        if(!isNaN(n)) sum += n;
+      }
+      subtotals[f.key] = sum;
+    });
+    return subtotals;
+  }
+  function countFilledDays(){
+    var n = 0;
+    Object.keys(state.entries).forEach(function(d){ if(entryHasData(state.entries[d])) n++; });
+    return n;
+  }
+
+  function loadExcelJS(){
+    if(window.ExcelJS) return Promise.resolve();
+    if(window.__exceljsLoading) return window.__exceljsLoading;
+    window.__exceljsLoading = new Promise(function(resolve, reject){
+      var s = document.createElement('script');
+      s.src = 'https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js';
+      s.onload = resolve;
+      s.onerror = reject;
+      document.head.appendChild(s);
+    });
+    return window.__exceljsLoading;
+  }
+
+  // ---------------- Excel export ----------------
+  async function handleDownload(btn){
+    var originalText = btn ? btn.textContent : '';
+    if(btn){ btn.disabled = true; btn.textContent = 'تیار ہو رہا ہے...'; }
+    try{
+      await loadExcelJS();
+      var year = state.year, month = state.month;
+      var totalRows = 31;
+      var nDays = daysInMonth(year, month);
+
+      var workbook = new ExcelJS.Workbook();
+      var ws = workbook.addWorksheet('یومیہ جدول', { views: [{ rightToLeft: true, state:'frozen', ySplit:5 }] });
+      ws.columns = [
+        {key:'A',width:20},{key:'B',width:20},{key:'C',width:14},{key:'D',width:14},{key:'E',width:12},
+        {key:'F',width:12},{key:'G',width:12},{key:'H',width:12},{key:'I',width:12},{key:'J',width:12},
+        {key:'K',width:15},{key:'L',width:18},{key:'M',width:11},{key:'N',width:11},{key:'O',width:14},
+        {key:'P',width:14},{key:'Q',width:12}
+      ];
+
+      function set(r,c,v){ ws.getCell(c+r).value = v; }
+      function setFormula(r,c,f){ ws.getCell(c+r).value = { formula: f }; }
+      function styleRange(sheet, rowNum, fillArgb, fontArgb, bold, size){
+        COLS.forEach(function(c){
+          var cell = sheet.getCell(c+rowNum);
+          if(fillArgb) cell.fill = { type:'pattern', pattern:'solid', fgColor:{argb:fillArgb} };
+          cell.font = { name:'Arial', size:size||10, bold: !!bold, color:{argb:fontArgb||'FF2B2620'} };
+        });
+      }
+
+      set(1,'A','یومیہ  کا رکردگی جدول  ورکشاپ ذمہ دارمدنی عطیا ت بکس     (دعوتِ اسلامی )');
+      set(2,'A',year); set(2,'B',EN_MONTHS[month-1]); set(2,'C','عیسوی مہینہ و سال');
+      set(2,'E','شہر و ڈسٹرکٹ:' + (state.profile.city||''));
+      set(2,'I','موبائل نمبر:' + (state.profile.mobile||''));
+      set(2,'M','نام بمعہ ولدیت: ' + (state.profile.name||''));
+      set(3,'A',9); set(3,'B',8); set(3,'C',7);
+      set(3,'E',6); set(3,'F',5); set(3,'G',4); set(3,'H',3); set(3,'I',2); set(3,'J',1);
+      set(3,'K','آپ کے انڈر ورکشاپ کی تعداد:' + (state.profile.workshopCount||''));
+      set(4,'A','دستخط  آفس ذمہ دار'); set(4,'B','بیگ نمبر'); set(4,'C','دیگرکام کیے');
+      set(4,'E','لاک مرمت کئے'); set(4,'F','خصوصی سکریپ کئے'); set(4,'G','عمومی سکریپ کئے');
+      set(4,'H','خصوصی مرمت کئے'); set(4,'I','عمومی مرمت کئے'); set(4,'J','بکس وصول کئے');
+      set(4,'K','کرایہ/کلومیٹر'); set(4,'L','ضلع / علاقہ'); set(4,'M','وقت\n رخصت'); set(4,'N','وقت \nآمد'); set(4,'O','تاريخ');
+      set(5,'O','عیسوی'); set(5,'P','مدنی'); set(5,'Q','دن');
+
+      for(var day=1; day<=totalRows; day++){
+        var r = 5 + day;
+        if(day <= nDays){
+          var date = new Date(year, month-1, day);
+          var e = state.entries[day] || emptyEntry();
+          set(r,'B', e.bagNumber || '');
+          set(r,'C', e.otherWork || '');
+          set(r,'E', e.lockRepair || '');
+          set(r,'F', e.specialScrap || '');
+          set(r,'G', e.generalScrap || '');
+          set(r,'H', e.specialRepair || '');
+          set(r,'I', e.generalRepair || '');
+          set(r,'J', e.boxesReceived || '');
+          set(r,'K', e.fareKm || '');
+          set(r,'L', e.dayType ? dayTypeLabel(e.dayType) : [e.district, e.cityArea].filter(Boolean).join(' / '));
+          set(r,'M', e.departureTime || '');
+          set(r,'N', e.arrivalTime || '');
+          set(r,'O', gregLabel(date));
+          set(r,'P', hijriLabel(date));
+          set(r,'Q', URDU_DAYS[date.getDay()]);
+          ws.getRow(r).height = 28;
+          if(e.officeSignature){
+            try{
+              var base64 = e.officeSignature.split(',')[1] || e.officeSignature;
+              var imgId = workbook.addImage({ base64: base64, extension: 'png' });
+              ws.addImage(imgId, { tl: { col: 0.08, row: (r-1)+0.08 }, ext: { width: 100, height: 32 } });
+            }catch(err){}
+          }
+        }
+      }
+
+      setFormula(37,'E','SUBTOTAL(9,E6:E36)'); setFormula(37,'F','SUBTOTAL(9,F6:F36)');
+      setFormula(37,'G','SUBTOTAL(9,G6:G36)'); setFormula(37,'H','SUBTOTAL(9,H6:H36)');
+      setFormula(37,'I','SUBTOTAL(9,I6:I36)'); setFormula(37,'J','SUBTOTAL(9,J6:J36)');
+      set(37,'L','بکس مرمت ذمہ دار ماہانہ مجموعی میزان یہاں لازمی تحریر فرما ئیں :');
+
+      set(39,'A','کل مشاہرہ'); set(39,'B','سفری اخراجات'); set(39,'E','بیرونی جدول');
+      set(39,'F','روزانہ فکر مدینہ'); set(39,'G','ہفتہ وارمدنی   مذاکرہ میں شرکت');
+      set(39,'H','ہفتہ وار اجتماع میں شرکت'); set(39,'I','مدنی \nانعامات'); set(39,'J','مدنی قافلہ');
+      set(39,'M','کل ايام\n رخصت'); set(39,'O','کل ايام غير \nحاضری '); set(39,'Q','کل ايام حاضری');
+      set(40,'J','تيس دن'); set(40,'K','بارہ دن'); set(40,'L','تين دن');
+
+      set(41,'A', state.summary.totalSalary || ''); set(41,'B', state.summary.travelExpenses || '');
+      set(41,'E', state.summary.outsideSchedule || ''); set(41,'F', state.summary.dailyFikreMadina || '');
+      set(41,'G', state.summary.weeklyMuzakra || ''); set(41,'H', state.summary.weeklyIjtima || '');
+      set(41,'I', state.summary.madaniInaamat || ''); set(41,'M', state.summary.totalLeaveDays || '');
+      set(41,'O', state.summary.totalAbsentDays || ''); set(41,'Q', state.summary.totalPresentDays || '');
+      set(42,'N','دستخط و تاثرات ڈویژن ذمہ دار :');
+
+      MERGE_RANGES_TEMPLATE.forEach(function(rng){ try{ ws.mergeCells(rng); }catch(e){} });
+      for(var d2=1; d2<=totalRows; d2++){ try{ ws.mergeCells('C'+(5+d2)+':D'+(5+d2)); }catch(e){} }
+
+      ws.eachRow({ includeEmpty:true }, function(row, rn){
+        if(rn > 42) return;
+        row.eachCell({ includeEmpty:true }, function(cell){
+          cell.alignment = { horizontal:'center', vertical:'middle', wrapText:true, readingOrder:'rtl' };
+          cell.border = { top:{style:'thin',color:{argb:'FFE3DCC8'}}, left:{style:'thin',color:{argb:'FFE3DCC8'}},
+            bottom:{style:'thin',color:{argb:'FFE3DCC8'}}, right:{style:'thin',color:{argb:'FFE3DCC8'}} };
+        });
+      });
+
+      ws.getRow(1).height = 34;
+      styleRange(ws,1,'FF0E3D2C','FFFFFFFF',true,15);
+      styleRange(ws,2,'FF177049','FFFFFFFF',true,10);
+      styleRange(ws,3,'FF1F9160','FFFFFFFF',false,9);
+      ws.getRow(4).height = 40;
+      styleRange(ws,4,'FFE3F2E7','FF0E3D2C',true,10);
+      styleRange(ws,5,'FFE3F2E7','FF0E3D2C',true,10);
+      for(var dRow=1; dRow<=totalRows; dRow++){
+        var rr = 5 + dRow, inMonth = dRow <= nDays;
+        var band = (dRow % 2 === 0) ? 'FFFBF8F1' : 'FFFFFFFF';
+        styleRange(ws, rr, inMonth ? band : 'FFF4F1E9', inMonth ? 'FF2B2620' : 'FFC7BEA8', false, 10);
+      }
+      styleRange(ws,37,'FFF7ECD2','FF7A5A12',true,10);
+      styleRange(ws,38,'FF0E3D2C','FFFFFFFF',true,10);
+      styleRange(ws,39,'FFE3F2E7','FF0E3D2C',true,9);
+      styleRange(ws,40,'FFE3F2E7','FF125239',false,9);
+      styleRange(ws,41,'FFFFFFFF','FF0E3D2C',true,11);
+      ws.getRow(41).height = 24;
+      styleRange(ws,42,'FFFBF8F1','FF2B2620',false,9);
+
+      // ---- Sheet 2: verification & approval trail ----
+      var ws2 = workbook.addWorksheet('توثیق و منظوری', { views:[{ rightToLeft:true }] });
+      ws2.columns = [{width:14},{width:18},{width:24},{width:16},{width:22},{width:24}];
+      var headers2 = ['تاریخ','ضلع','آفس ذمہ دار (دستخط کنندہ)','دستخط','تصدیق کی تاریخ/وقت','حیثیت'];
+      headers2.forEach(function(h,i){ ws2.getCell(1, i+1).value = h; });
+      ws2.getRow(1).eachCell(function(cell){
+        cell.fill = { type:'pattern', pattern:'solid', fgColor:{argb:'FF0E3D2C'} };
+        cell.font = { name:'Arial', bold:true, size:11, color:{argb:'FFFFFFFF'} };
+        cell.alignment = { horizontal:'center', vertical:'middle', readingOrder:'rtl' };
+      });
+      var list2 = filledDaysList();
+      var rIdx = 2;
+      list2.forEach(function(item, i){
+        var date = new Date(year, month-1, item.day);
+        var vals = [gregLabel(date), (item.e.dayType ? dayTypeLabel(item.e.dayType) : item.e.district||''), item.e.officeSignedBy||'', '', fmtDateTime(item.e.officeSignedAt), statusLabel(item.status, item.e.dayType)];
+        vals.forEach(function(v, ci){ ws2.getCell(rIdx, ci+1).value = v; });
+        ws2.getRow(rIdx).height = 30;
+        ws2.getRow(rIdx).eachCell({includeEmpty:true}, function(cell){
+          cell.alignment = { horizontal:'center', vertical:'middle', wrapText:true, readingOrder:'rtl' };
+          cell.border = { top:{style:'thin',color:{argb:'FFE3DCC8'}}, left:{style:'thin',color:{argb:'FFE3DCC8'}},
+            bottom:{style:'thin',color:{argb:'FFE3DCC8'}}, right:{style:'thin',color:{argb:'FFE3DCC8'}} };
+          cell.fill = { type:'pattern', pattern:'solid', fgColor:{argb: item.status==='signed' ? 'FFF2F8F1' : 'FFF7ECD2'} };
+        });
+        if(item.e.officeSignature){
+          try{
+            var b64 = item.e.officeSignature.split(',')[1] || item.e.officeSignature;
+            var imgId2 = workbook.addImage({ base64:b64, extension:'png' });
+            ws2.addImage(imgId2, { tl:{ col:3.08, row:(rIdx-1)+0.08 }, ext:{ width:90, height:28 } });
+          }catch(err){}
+        }
+        rIdx++;
+      });
+      rIdx += 1;
+      ws2.getCell('A'+rIdx).value = 'ڈویژن ذمہ دار کی حتمی منظوری';
+      ws2.mergeCells('A'+rIdx+':F'+rIdx);
+      ws2.getCell('A'+rIdx).fill = { type:'pattern', pattern:'solid', fgColor:{argb:'FF177049'} };
+      ws2.getCell('A'+rIdx).font = { bold:true, size:12, color:{argb:'FFFFFFFF'} };
+      ws2.getCell('A'+rIdx).alignment = { horizontal:'center', vertical:'middle', readingOrder:'rtl' };
+      rIdx++;
+      ws2.getCell('A'+rIdx).value = 'نام: ' + (state.division.signedBy || '—');
+      ws2.getCell('C'+rIdx).value = 'تاریخ: ' + (fmtDateTime(state.division.signedAt) || '—');
+      ws2.getCell('E'+rIdx).value = isMonthApproved() ? '✓ حتمی منظور شدہ' : 'منظوری زیر التوا';
+      ws2.mergeCells('A'+rIdx+':B'+rIdx); ws2.mergeCells('C'+rIdx+':D'+rIdx); ws2.mergeCells('E'+rIdx+':F'+rIdx);
+      ws2.getRow(rIdx).height = 26;
+      ws2.getRow(rIdx).eachCell({includeEmpty:true}, function(cell){
+        cell.alignment = { horizontal:'center', vertical:'middle', readingOrder:'rtl' };
+        cell.font = { size:10, bold:true, color:{argb:'FF2B2620'} };
+        cell.fill = { type:'pattern', pattern:'solid', fgColor:{argb:'FFFBF8F1'} };
+        cell.border = { top:{style:'thin',color:{argb:'FFE3DCC8'}}, left:{style:'thin',color:{argb:'FFE3DCC8'}},
+          bottom:{style:'thin',color:{argb:'FFE3DCC8'}}, right:{style:'thin',color:{argb:'FFE3DCC8'}} };
+      });
+      if(state.division.signature){
+        try{
+          var b64d = state.division.signature.split(',')[1] || state.division.signature;
+          var imgId3 = workbook.addImage({ base64:b64d, extension:'png' });
+          ws2.addImage(imgId3, { tl:{ col:5.2, row:(rIdx-2)+0.1 }, ext:{ width:110, height:36 } });
+        }catch(err){}
+      }
+
+      var buf = await workbook.xlsx.writeBuffer();
+      var blob = new Blob([buf], { type: 'application/octet-stream' });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url; a.download = 'Workshop_Jadwal_' + year + '-' + String(month).padStart(2,'0') + '.xlsx';
+      document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      state.showExcelPreview = false;
+    } finally {
+      if(btn){ btn.disabled = false; btn.textContent = originalText || '⬇ ایکسل ڈاؤن لوڈ کریں'; }
+      render();
+    }
+  }
+
+  // ---------------- Rendering ----------------
+  function renderSaveTagOnly(){
+    document.querySelectorAll('#saveTag').forEach(function(el){ el.outerHTML = saveTagHtml(); });
+  }
+  function saveTagHtml(){
+    var map = {
+      saving: '<span id="saveTag" class="save-tag"><span class="spin" style="width:12px;height:12px;"></span> محفوظ ہو رہا ہے</span>',
+      saved: '<span id="saveTag" class="save-tag saved">✓ فون میں محفوظ ہوگیا</span>',
+      syncing: '<span id="saveTag" class="save-tag"><span class="spin" style="width:12px;height:12px;"></span> گوگل شیٹ پر بھیجا جا رہا ہے</span>',
+      synced: '<span id="saveTag" class="save-tag synced">✓ گوگل شیٹ سے ہم آہنگ</span>',
+      'sync-error': '<span id="saveTag" class="save-tag warn">⚠ لوکل محفوظ، گوگل شیٹ سنک ناکام</span>',
+      'too-large': '<span id="saveTag" class="save-tag warn">⚠ فون میں محفوظ، لیکن گوگل شیٹ کی حد پوری — دستخط والی تصاویر کا سائز کم کریں</span>',
+      error: '<span id="saveTag" class="save-tag warn">⚠ محفوظ کرنے میں مسئلہ</span>'
+    };
+    return map[state.saveState] || '<span id="saveTag" class="save-tag"></span>';
+  }
+
+  function roleSwitchHtml(){
+    var labels = {
+      admin: '🛡️ آپ لاگ اِن ہیں بطور: سپر ایڈمن (IDs کا انتظام)',
+      workshop: '🧑‍🔧 آپ لاگ اِن ہیں بطور: ورکشاپ ذمہ دار (اندراج)',
+      division: '🏛️ آپ لاگ اِن ہیں بطور: ڈویژن ذمہ دار (حتمی منظوری)',
+      monitor: '👁️ آپ لاگ اِن ہیں بطور: ڈویژن آفس ذمہ دار (صرف نگرانی)',
+      office: '🏢 آپ لاگ اِن ہیں بطور: '+esc(state.activeDistrict)+' — آفس ذمہ دار'
+    };
+    var label = labels[state.role] || '';
+    return '<div class="card"><div class="plain-banner" style="margin:0; display:flex; align-items:center; justify-content:space-between; gap:10px; text-align:right;">' +
+      '<span>'+label+'</span><button type="button" class="btn secondary small" id="logoutBtn">🚪 لاگ آؤٹ</button></div></div>';
+  }
+
+  function approveBannerHtml(){
+    if(!isMonthApproved()) return '';
+    return '<div class="approve-banner"><span class="big">✅ یہ ماہ حتمی طور پر منظور ہو چکا ہے</span>' +
+      '<span>ڈویژن ذمہ دار: '+esc(state.division.signedBy)+' · '+fmtDateTime(state.division.signedAt)+'</span></div>';
+  }
+
+  function adminPanelHtml(){
+    var rows = state.districts.map(function(d, i){
+      return '<div class="district-row">' +
+        '<input placeholder="ضلع کا نام" data-role="district-field" data-idx="'+i+'" data-key="name" value="'+esc(d.name)+'">' +
+        '<input placeholder="آفس ذمہ دار کا نام" data-role="district-field" data-idx="'+i+'" data-key="officer" value="'+esc(d.officer)+'">' +
+        '<input placeholder="یوزرنیم" data-role="district-field" data-idx="'+i+'" data-key="username" value="'+esc(d.username||'')+'">' +
+        '<input placeholder="پاسورڈ" type="text" data-role="district-field" data-idx="'+i+'" data-key="password" value="'+esc(d.password||'')+'">' +
+        '<button type="button" class="district-remove" data-role="district-remove" data-idx="'+i+'" title="حذف کریں">×</button>' +
+      '</div>';
+    }).join('');
+    return '' +
+    '<div class="card">' +
+      '<h2 class="section-title">ورکشاپ ذمہ دار کا اکاؤنٹ</h2>' +
+      '<div class="grid grid-4">' +
+        '<label class="field"><span>یوزرنیم</span><input data-role="account" data-key="workshopUsername" value="'+esc(state.settings.workshopUsername)+'" placeholder="یوزرنیم"></label>' +
+        '<label class="field"><span>پاسورڈ</span><input data-role="account" data-key="workshopPassword" value="'+esc(state.settings.workshopPassword)+'" placeholder="پاسورڈ"></label>' +
+      '</div>' +
+      '<div class="muted" style="margin-top:8px;">یہ اکاؤنٹ روزانہ اندراج (data entry) کے لیے ہے۔ یہ یوزرنیم/پاسورڈ ورکشاپ ذمہ دار کو دیں۔</div>' +
+    '</div>' +
+    '<div class="card">' +
+      '<h2 class="section-title">ڈویژن ذمہ دار کا اکاؤنٹ</h2>' +
+      '<div class="grid grid-4">' +
+        '<label class="field"><span>یوزرنیم</span><input data-role="account" data-key="divisionUsername" value="'+esc(state.settings.divisionUsername)+'" placeholder="یوزرنیم"></label>' +
+        '<label class="field"><span>پاسورڈ</span><input data-role="account" data-key="divisionPassword" value="'+esc(state.settings.divisionPassword)+'" placeholder="پاسورڈ"></label>' +
+      '</div>' +
+      '<div class="muted" style="margin-top:8px;">یہ اکاؤنٹ حتمی ماہانہ منظوری کے لیے ہے۔</div>' +
+    '</div>' +
+    '<div class="card">' +
+      '<h2 class="section-title">ڈویژن آفس ذمہ دار کا اکاؤنٹ (نگرانی)</h2>' +
+      '<div class="grid grid-4">' +
+        '<label class="field"><span>یوزرنیم</span><input data-role="account" data-key="divisionOfficeUsername" value="'+esc(state.settings.divisionOfficeUsername)+'" placeholder="یوزرنیم"></label>' +
+        '<label class="field"><span>پاسورڈ</span><input data-role="account" data-key="divisionOfficePassword" value="'+esc(state.settings.divisionOfficePassword)+'" placeholder="پاسورڈ"></label>' +
+      '</div>' +
+      '<div class="muted" style="margin-top:8px;">یہ اکاؤنٹ صرف نگرانی کے لیے ہے — تمام اضلاع کی اندراجات اور آفس تصدیق کی صورتحال دیکھ سکتا ہے، لیکن نہ ترمیم کر سکتا ہے نہ منظوری دے سکتا ہے۔</div>' +
+    '</div>' +
+    '<div class="card">' +
+      '<h2 class="section-title">اضلاع اور آفس ذمہ داران کے اکاؤنٹس</h2>' +
+      '<div id="districtRows">'+rows+'</div>' +
+      '<button type="button" class="btn secondary small" id="addDistrictBtn">+ ضلع شامل کریں</button>' +
+      '<div class="muted" style="margin-top:8px;">ہر ضلع کے لیے یوزرنیم/پاسورڈ بنائیں اور صرف اسی ضلع کے آفس ذمہ دار کو بتا دیں۔ وہ اس سے لاگ اِن کر کے صرف اپنے ضلع کی اندراجات دیکھ اور تصدیق کر سکیں گے۔</div>' +
+    '</div>' +
+    '<div class="card">' +
+      '<h2 class="section-title">سپر ایڈمن پاسورڈ تبدیل کریں</h2>' +
+      '<div class="grid grid-4">' +
+        '<label class="field"><span>یوزرنیم</span><input data-role="account" data-key="superAdminUsername" value="'+esc(state.settings.superAdminUsername)+'" placeholder="یوزرنیم"></label>' +
+        '<label class="field"><span>پاسورڈ</span><input data-role="account" data-key="superAdminPassword" value="'+esc(state.settings.superAdminPassword)+'" placeholder="پاسورڈ"></label>' +
+      '</div>' +
+      '<div class="muted" style="margin-top:8px;">یہ سب سے اوپر کا اکاؤنٹ ہے جو تمام IDs بناتا اور منظم کرتا ہے۔ اسے صرف قابلِ اعتماد شخص کے پاس رکھیں۔</div>' +
+    '</div>';
+  }
+
+  function profileCardHtml(){
+    var p = state.profile;
+    return '' +
+    '<div class="card">' +
+      '<h2 class="section-title">پروفائل</h2>' +
+      '<div class="grid grid-4">' +
+        '<label class="field"><span>نام بمعہ ولدیت</span><input data-role="profile" data-key="name" value="'+esc(p.name)+'" placeholder="نام"></label>' +
+        '<label class="field"><span>موبائل نمبر</span><input data-role="profile" data-key="mobile" value="'+esc(p.mobile)+'" placeholder="03xxxxxxxxx"></label>' +
+        '<label class="field"><span>شہر و ڈسٹرکٹ</span><input data-role="profile" data-key="city" value="'+esc(p.city)+'" placeholder="شہر"></label>' +
+        '<label class="field"><span>انڈر ورکشاپس کی تعداد</span><input data-role="profile" data-key="workshopCount" value="'+esc(p.workshopCount)+'" placeholder="تعداد"></label>' +
+      '</div>' +
+    '</div>';
+  }
+
+  function toolbarHtml(){
+    var nDays = daysInMonth(state.year, state.month);
+    var monthOpts = URDU_MONTHS.map(function(m,i){
+      var v = i+1;
+      return '<option value="'+v+'"'+(v===state.month?' selected':'')+'>'+m+' ('+EN_MONTHS[i]+')</option>';
+    }).join('');
+    var yearOpts = '';
+    for(var y=2024; y<=2030; y++){ yearOpts += '<option value="'+y+'"'+(y===state.year?' selected':'')+'>'+y+'</option>'; }
+    return '' +
+    '<div class="toolbar">' +
+      '<div class="toolbar-left">' +
+        '<select id="monthSel">'+monthOpts+'</select>' +
+        '<select id="yearSel">'+yearOpts+'</select>' +
+        '<span class="muted">'+countFilledDays()+' / '+nDays+' دن مکمل</span>' +
+      '</div>' +
+      '<div class="toolbar-right">' + saveTagHtml() +
+        '<button class="btn" id="previewBtn">📄 ایکسل پیش منظر دیکھیں</button>' +
+      '</div>' +
+    '</div>';
+  }
+
+  function dayItemHtml(day, mode){
+    var date = new Date(state.year, state.month-1, day);
+    var e = state.entries[day] || emptyEntry();
+    var st = entryStatus(e, day);
+    var numClass = st === 'signed' ? ' is-filled' : (st === 'pending' ? ' is-pending' : (st === 'auto' ? ' is-auto' : (st === 'holiday' ? ' is-holiday' : '')));
+    var btnLabel = mode === 'office'
+      ? (st === 'signed' ? 'دیکھیں (تصدیق شدہ)' : 'جائزہ لیں و دستخط کریں')
+      : (st === 'empty' ? '+ اندراج کریں' : (st === 'holiday' ? 'دیکھیں / کام کی تفصیل درج کریں' : 'ترمیم / تفصیل دیکھیں'));
+    return '' +
+    '<div class="day-item">' +
+      '<div class="day-item-main">' +
+        '<span class="day-num'+numClass+'">'+day+'</span>' +
+        '<div class="day-text">' +
+          '<div class="d1">'+gregLabel(date)+'<i>·</i>'+URDU_DAYS[date.getDay()]+'</div>' +
+          '<div class="d2">مدنی: '+hijriLabel(date)+(st==='auto' ? ' · '+dayTypeLabel(e.dayType) : (st==='holiday' ? ' · ہفتہ وار تعطیل' : (e.district?' · ضلع: '+esc(e.district):'')))+'</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="day-item-side">' +
+        '<span class="status-pill '+st+'">'+statusLabel(st, e.dayType)+'</span>' +
+        '<button type="button" class="btn small'+(st!=='empty'?' secondary':'')+'" data-role="open-entry" data-day="'+day+'" data-mode="'+mode+'">'+btnLabel+'</button>' +
+      '</div>' +
+    '</div>';
+  }
+
+  function workshopListHtml(){
+    var nDays = daysInMonth(state.year, state.month);
+    var rowsHtml = '';
+    for(var d=1; d<=nDays; d++) rowsHtml += dayItemHtml(d, 'workshop');
+    return '<div class="card days-card">'+rowsHtml+'</div>' +
+      subtotalsHtml() + summaryFormHtml();
+  }
+
+  function officeQueueHtml(){
+    if(!state.districts.length){
+      return '<div class="plain-banner">ابھی کوئی ضلع شامل نہیں کیا گیا۔ پہلے ورکشاپ ذمہ دار کے پینل سے اضلاع شامل کریں۔</div>';
+    }
+    if(!state.activeDistrict){
+      return '<div class="plain-banner">براہ کرم اوپر سے وہ ضلع منتخب کریں جس کی آپ تصدیق کر رہے ہیں۔</div>';
+    }
+    var nDays = daysInMonth(state.year, state.month);
+    var rowsHtml = '', count = 0, pendingCount = 0;
+    for(var d=1; d<=nDays; d++){
+      var e = state.entries[d];
+      if(e && e.district === state.activeDistrict && entryHasData(e)){
+        rowsHtml += dayItemHtml(d, 'office');
+        count++;
+        if(entryStatus(e, d) === 'pending') pendingCount++;
+      }
+    }
+    if(!count){
+      return '<div class="plain-banner">اس ضلع کے لیے ابھی کوئی اندراج موجود نہیں ہے۔</div>';
+    }
+    var banner = pendingCount
+      ? '<div class="info-banner"><span>⏳ '+pendingCount+' دن آپ کی تصدیق کے منتظر ہیں</span><span>ضلع: '+esc(state.activeDistrict)+'</span></div>'
+      : '<div class="plain-banner">✓ اس ضلع کے تمام اندراجات تصدیق شدہ ہیں</div>';
+    return banner + '<div class="card days-card">'+rowsHtml+'</div>';
+  }
+
+  function divisionPanelHtml(){
+    var list = filledDaysList();
+    var ready = monthReadyForDivision();
+    var html = '';
+
+    if(isMonthApproved()){
+      // banner already shown globally
+    } else if(ready){
+      html += '<div class="info-banner"><span>✅ تمام دفاتر سے تصدیق مکمل — اب حتمی منظوری دی جا سکتی ہے</span></div>';
+    } else {
+      var pendingList = pendingDivisionItems();
+      html += '<div class="plain-banner" style="text-align:right;">⏳ ابھی درج ذیل دنوں کے دفاتر کی تصدیق باقی ہے، اس لیے حتمی منظوری ابھی مکمل نہیں ہو سکتی:<br>' +
+        pendingList.map(function(p){ return '• '+esc(p); }).join('<br>') + '</div>';
+    }
+
+    if(list.length){
+      var rows = list.map(function(item){
+        var date = new Date(state.year, state.month-1, item.day);
+        return '<tr class="st-'+item.status+'">' +
+          '<td>'+gregLabel(date)+'</td>' +
+          '<td>'+esc(item.e.dayType ? dayTypeLabel(item.e.dayType) : (item.e.district||'—'))+'</td>' +
+          '<td>'+esc(item.e.officeSignedBy||'—')+'</td>' +
+          '<td>'+(fmtDateTime(item.e.officeSignedAt)||'—')+'</td>' +
+          '<td>'+statusLabel(item.status, item.e.dayType)+'</td>' +
+        '</tr>';
+      }).join('');
+      html += '<div class="card"><h2 class="section-title">ماہ کی تفصیل — ضلع وار تصدیق کی صورتحال</h2>' +
+        '<div class="division-table-wrap"><table class="division-table">' +
+        '<tr><th>تاریخ</th><th>ضلع</th><th>آفس ذمہ دار</th><th>تصدیق کا وقت</th><th>حیثیت</th></tr>' +
+        rows + '</table></div></div>';
+    }
+
+    html += subtotalsHtml();
+
+    var sigPreview = state.division.signature
+      ? '<div class="sig-preview"><img src="'+state.division.signature+'"><span class="muted">موجودہ دستخط</span></div>'
+      : '<div class="sig-wrap"><canvas class="sig-pad" data-day="division" width="220" height="80"></canvas>' +
+        '<div class="sig-actions">' +
+          '<button type="button" class="btn secondary small sig-clear" data-day="division">صاف کریں</button>' +
+          '<button type="button" class="btn secondary small sig-upload-btn" data-day="division">🖼️ تصویر اپلوڈ کریں</button>' +
+          '<input type="file" accept="image/*" class="sig-upload-input" data-day="division" style="display:none">' +
+        '</div></div>';
+
+    html += '<div class="card">' +
+      '<h2 class="section-title">ڈویژن ذمہ دار کی حتمی منظوری</h2>' +
+      (isMonthApproved()
+        ? '<div class="locked-note"><span>یہ ماہ منظور ہو چکا ہے — '+esc(state.division.signedBy)+' · '+fmtDateTime(state.division.signedAt)+'</span>' +
+            '<button type="button" class="btn danger small" id="revokeApprovalBtn">🔓 منظوری واپس لیں</button></div>'
+        : '<div class="grid grid-4">' +
+            '<label class="field"><span>ڈویژن ذمہ دار کا نام</span><input id="divisionNameInput" value="'+esc(state.division.signedBy)+'" placeholder="نام"></label>' +
+          '</div>' +
+          '<label class="field" style="margin-top:8px;"><span class="sig-label">دستخط ڈویژن ذمہ دار</span>' + sigPreview + '</label>' +
+          (!ready ? '<div class="muted" style="margin-top:8px;">نوٹ: آپ ابھی نام لکھ سکتے ہیں اور دستخط کر سکتے ہیں، لیکن حتمی منظوری اسی وقت مکمل ہوگی جب تمام اضلاع کی تصدیق ہو چکی ہو۔</div>' : '') +
+          '<div style="margin-top:14px; text-align:left;">' +
+            '<button type="button" class="btn" id="divisionApproveBtn">🖊️ حتمی منظوری دیں و دستخط ثبت کریں</button>' +
+          '</div>'
+      ) +
+    '</div>';
+
+    return html;
+  }
+
+  function entryModalHtml(){
+    var day = state.entryModalDay;
+    if(!day) return '';
+    var mode = state.entryModalMode;
+    var date = new Date(state.year, state.month-1, day);
+    var e = state.entries[day] || emptyEntry();
+    var st = entryStatus(e, day);
+
+    if(mode === 'office'){
+      var readonlyFields = FIELD_DEFS.concat(EXTRA_FIELDS).map(function(f){
+        return '<label class="field"><span>'+f.label+'</span>' +
+          '<input value="'+esc(e[f.key])+'" disabled></label>';
+      }).join('');
+      var sigBlock = e.officeSignature
+        ? '<div class="sig-preview"><img src="'+e.officeSignature+'"></div>'
+        : '<div class="sig-wrap"><canvas class="sig-pad" data-day="'+day+'" width="220" height="80"></canvas>' +
+          '<div class="sig-actions">' +
+            '<button type="button" class="btn secondary small sig-clear" data-day="'+day+'">صاف کریں</button>' +
+            '<button type="button" class="btn secondary small sig-upload-btn" data-day="'+day+'">🖼️ تصویر اپلوڈ کریں</button>' +
+            '<input type="file" accept="image/*" class="sig-upload-input" data-day="'+day+'" style="display:none">' +
+          '</div></div>';
+      return '' +
+      '<div class="modal-overlay" data-role="modal-overlay">' +
+        '<div class="modal-card">' +
+          '<div class="modal-head"><div>' +
+            '<div class="modal-title">'+gregLabel(date)+' — '+URDU_DAYS[date.getDay()]+'</div>' +
+            '<div class="modal-sub">ضلع: '+esc(e.district)+' · مدنی: '+hijriLabel(date)+'</div>' +
+          '</div><button type="button" class="modal-close" data-role="modal-close">×</button></div>' +
+          '<div class="modal-body">' +
+            '<div class="grid grid-3 readonly-grid">'+readonlyFields+'</div>' +
+            '<label class="field"><span>آفس ذمہ دار کا نام</span><input id="officeSignedByInput" value="'+esc(e.officeSignedBy || districtOfficer(e.district))+'" placeholder="نام" '+(st==='signed'?'disabled':'')+'></label>' +
+            (st==='signed'
+              ? '<div class="locked-note" style="margin-top:10px;"><span>✓ تصدیق شدہ — '+esc(e.officeSignedBy)+' · '+fmtDateTime(e.officeSignedAt)+'</span></div>'
+              : '<label class="field" style="margin-top:10px;"><span class="sig-label">دستخط</span>'+sigBlock+'</label>' +
+                '<label class="field" style="margin-top:10px;"><span>نوٹ (اگر واپس بھیجنا ہو تو وجہ لکھیں)</span><textarea id="officeNoteInput" rows="2" placeholder="مثلاً: بکس وصول کی تعداد چیک کریں"></textarea></label>'
+            ) +
+          '</div>' +
+          '<div class="modal-foot">' +
+            (st==='signed' ? '<span class="muted">یہ اندراج پہلے سے تصدیق شدہ ہے</span>' :
+              '<button type="button" class="btn danger small" id="sendBackBtn">↩ واپس بھیجیں</button>') +
+            (st==='signed' ? '' : '<button type="button" class="btn" id="confirmSignBtn" '+(isMonthApproved()?'disabled':'')+'>✓ تصدیق کریں و دستخط ثبت کریں</button>') +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    }
+
+    // workshop mode
+    var locked = (st === 'signed') || isMonthApproved();
+    var dayTypeLocked = isMonthApproved();
+    var dayTypeOpts = [
+      { v:'', label:'— عام دن (اندراج کریں) —' },
+      { v:'leave', label:'رخصت' },
+      { v:'qafila', label:'مدنی قافلہ' }
+    ].map(function(o){ return '<option value="'+o.v+'"'+(e.dayType===o.v?' selected':'')+'>'+o.label+'</option>'; }).join('');
+    var dayTypeSelect = '<label class="field" style="margin-bottom:14px;"><span>دن کی نوعیت</span>' +
+      '<select id="dayTypeInput" data-day="'+day+'" '+(dayTypeLocked?'disabled':'')+'>'+dayTypeOpts+'</select></label>';
+
+    if(e.dayType === 'leave' || e.dayType === 'qafila'){
+      return '' +
+      '<div class="modal-overlay" data-role="modal-overlay">' +
+        '<div class="modal-card">' +
+          '<div class="modal-head"><div>' +
+            '<div class="modal-title">'+gregLabel(date)+' — '+URDU_DAYS[date.getDay()]+'</div>' +
+            '<div class="modal-sub">مدنی تاریخ: '+hijriLabel(date)+'</div>' +
+          '</div><button type="button" class="modal-close" data-role="modal-close">×</button></div>' +
+          '<div class="modal-body">' +
+            dayTypeSelect +
+            '<div class="locked-note"><span>✓ یہ دن "'+dayTypeLabel(e.dayType)+'" کے طور پر درج ہے — اس کے لیے ضلع منتخب کرنے یا آفس تصدیق کی ضرورت نہیں، یہ خودکار طور پر مکمل شمار ہوگا۔</span></div>' +
+            (isMonthApproved() ? '<div class="locked-note" style="margin-top:12px;"><span>یہ پورا مہینہ حتمی منظور ہو چکا ہے، اس لیے ترمیم ممکن نہیں۔</span></div>' : '') +
+          '</div>' +
+          '<div class="modal-foot">' + saveTagHtml() +
+            '<button type="button" class="btn" data-role="modal-save">بند کریں</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    }
+
+    var districtOpts = '<option value="">— ضلع منتخب کریں —</option>' + state.districts.map(function(d){
+      return '<option value="'+esc(d.name)+'"'+(e.district===d.name?' selected':'')+'>'+esc(d.name)+'</option>';
+    }).join('');
+    var countFields = FIELD_DEFS.map(function(f){
+      return '<label class="field"><span>'+f.label+'</span>' +
+        '<input type="number" min="0" data-role="entry" data-day="'+day+'" data-key="'+f.key+'" value="'+esc(e[f.key])+'" '+(locked?'disabled':'')+'></label>';
+    }).join('');
+    var extraFields = EXTRA_FIELDS.map(function(f){
+      return '<label class="field"><span>'+f.label+'</span>' +
+        '<input type="'+f.type+'" data-role="entry" data-day="'+day+'" data-key="'+f.key+'" value="'+esc(e[f.key])+'" '+(locked?'disabled':'')+'></label>';
+    }).join('');
+
+    var sigInfo = e.officeSignature
+      ? '<div class="sig-preview"><img src="'+e.officeSignature+'"><span class="muted">'+esc(e.officeSignedBy)+' · '+fmtDateTime(e.officeSignedAt)+'</span></div>'
+      : '<div class="muted">دستخط ابھی موصول نہیں ہوئے — آفس ذمہ دار تصدیق کے بعد یہاں نظر آئیں گے۔</div>';
+
+    return '' +
+    '<div class="modal-overlay" data-role="modal-overlay">' +
+      '<div class="modal-card">' +
+        '<div class="modal-head"><div>' +
+          '<div class="modal-title">'+gregLabel(date)+' — '+URDU_DAYS[date.getDay()]+'</div>' +
+          '<div class="modal-sub">مدنی تاریخ: '+hijriLabel(date)+'</div>' +
+        '</div><button type="button" class="modal-close" data-role="modal-close">×</button></div>' +
+        '<div class="modal-body">' +
+          (e.officeNote ? '<div class="reject-note">↩ دفتر ذمہ دار کا نوٹ: '+esc(e.officeNote)+'</div>' : '') +
+          (st==='holiday' ? '<div class="locked-note" style="margin-bottom:14px;"><span>ℹ️ یہ اتوار ہے، اسے خودکار طور پر "ہفتہ وار تعطیل" شمار کیا جا رہا ہے۔ اگر آج کام کیا ہے تو نیچے ضلع اور تفصیل درج کریں۔</span></div>' : '') +
+          dayTypeSelect +
+          '<label class="field" style="margin-bottom:14px;"><span>ضلع (جہاں آج کام کیا)</span><select id="districtInput" data-day="'+day+'" '+(locked?'disabled':'')+'>'+districtOpts+'</select></label>' +
+          '<div class="grid grid-3">'+countFields+'</div>' +
+          '<div class="grid grid-4">'+extraFields+'</div>' +
+          '<label class="field"><span class="sig-label">دستخط آفس ذمہ دار</span>'+sigInfo+'</label>' +
+          (st==='signed' && !isMonthApproved()
+            ? '<div class="locked-note" style="margin-top:12px;"><span>یہ دن آفس سے تصدیق شدہ ہے، اس لیے مقفل ہے۔</span><button type="button" class="btn secondary small" id="reopenEntryBtn">🔓 ترمیم کے لیے دوبارہ کھولیں</button></div>'
+            : '') +
+          (isMonthApproved() ? '<div class="locked-note" style="margin-top:12px;"><span>یہ پورا مہینہ حتمی منظور ہو چکا ہے، اس لیے ترمیم ممکن نہیں۔</span></div>' : '') +
+        '</div>' +
+        '<div class="modal-foot">' + saveTagHtml() +
+          '<button type="button" class="btn" data-role="modal-save">بند کریں</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }
+
+  function excelPreviewHtml(){
+    if(!state.showExcelPreview) return '';
+    var year = state.year, month = state.month;
+    var nDays = daysInMonth(year, month);
+    var subtotals = computeSubtotals();
+
+    var headCells = ['دستخط آفس ذمہ دار','بیگ نمبر','دیگر کام کیے','لاک مرمت کئے','خصوصی سکریپ کئے','عمومی سکریپ کئے',
+      'خصوصی مرمت کئے','عمومی مرمت کئے','بکس وصول کئے','کرایہ/کلومیٹر','علاقہ','وقت رخصت','وقت آمد',
+      'تاریخ عیسوی','تاریخ مدنی','دن','ضلع','آفس دستخط کنندہ','حیثیت'];
+
+    var rowsHtml = '';
+    for(var d=1; d<=nDays; d++){
+      var date = new Date(year, month-1, d);
+      var e = state.entries[d] || emptyEntry();
+      rowsHtml += '<tr class="'+(d % 2 === 0 ? 'xp-band' : '')+'">' +
+        '<td>'+(e.officeSignature ? '<img class="xp-sig" src="'+e.officeSignature+'">' : '')+'</td>' +
+        '<td>'+esc(e.bagNumber)+'</td><td>'+esc(e.otherWork)+'</td>' +
+        '<td>'+esc(e.lockRepair)+'</td><td>'+esc(e.specialScrap)+'</td><td>'+esc(e.generalScrap)+'</td>' +
+        '<td>'+esc(e.specialRepair)+'</td><td>'+esc(e.generalRepair)+'</td><td>'+esc(e.boxesReceived)+'</td>' +
+        '<td>'+esc(e.fareKm)+'</td><td>'+esc(e.cityArea)+'</td><td>'+esc(e.departureTime)+'</td><td>'+esc(e.arrivalTime)+'</td>' +
+        '<td>'+gregLabel(date)+'</td><td>'+hijriLabel(date)+'</td><td>'+URDU_DAYS[date.getDay()]+'</td>' +
+        '<td>'+esc(e.dayType ? dayTypeLabel(e.dayType) : e.district)+'</td><td>'+esc(e.officeSignedBy)+'</td><td>'+statusLabel(entryStatus(e, d), e.dayType)+'</td>' +
+      '</tr>';
+    }
+
+    var table = '' +
+    '<table class="xp-table">' +
+      '<tr class="xp-title"><td colspan="19">یومیہ کارکردگی جدول — ورکشاپ ذمہ دار مدنی عطیات بکس (دعوتِ اسلامی)</td></tr>' +
+      '<tr class="xp-info">' +
+        '<td colspan="3">'+year+' — '+EN_MONTHS[month-1]+'</td>' +
+        '<td colspan="5">شہر: '+esc(state.profile.city)+' · موبائل: '+esc(state.profile.mobile)+'</td>' +
+        '<td colspan="11">نام بمعہ ولدیت: '+esc(state.profile.name)+'</td>' +
+      '</tr>' +
+      '<tr class="xp-head">'+headCells.map(function(h){ return '<td>'+h+'</td>'; }).join('')+'</tr>' +
+      rowsHtml +
+      '<tr class="xp-sub">' +
+        '<td></td><td></td><td></td>' +
+        '<td>'+subtotals.lockRepair+'</td><td>'+subtotals.specialScrap+'</td><td>'+subtotals.generalScrap+'</td>' +
+        '<td>'+subtotals.specialRepair+'</td><td>'+subtotals.generalRepair+'</td><td>'+subtotals.boxesReceived+'</td>' +
+        '<td colspan="10">ماہانہ مجموعی میزان</td>' +
+      '</tr>' +
+    '</table>';
+
+    var approvalNote = isMonthApproved()
+      ? '<div class="xp-note" style="color:var(--green-800); font-weight:700;">✅ یہ ماہ ڈویژن ذمہ دار ('+esc(state.division.signedBy)+') کی جانب سے '+fmtDateTime(state.division.signedAt)+' کو حتمی منظور کیا جا چکا ہے۔</div>'
+      : '<div class="xp-note" style="color:var(--amber-600); font-weight:700;">⏳ ابھی حتمی ڈویژن منظوری باقی ہے۔</div>';
+
+    return '' +
+    '<div class="modal-overlay" data-role="excel-preview-overlay">' +
+      '<div class="modal-card wide">' +
+        '<div class="modal-head"><div>' +
+          '<div class="modal-title">ایکسل فائل کا پیش منظر</div>' +
+          '<div class="modal-sub">'+URDU_MONTHS[month-1]+' '+year+' — ڈاؤن لوڈ سے پہلے تصدیق کر لیں</div>' +
+        '</div><button type="button" class="modal-close" data-role="excel-preview-close">×</button></div>' +
+        '<div class="modal-body">' +
+          '<div class="xp-scroll">'+table+'</div>' +
+          '<div class="xp-note">یہ ایک عمومی جھلک ہے؛ اصل فائل میں پہلی شیٹ مکمل فارمیٹنگ کے ساتھ اصل جدول کی طرز پر ہوگی، جبکہ دوسری شیٹ "توثیق و منظوری" میں ہر دن کے آفس دستخط اور ڈویژن کی حتمی منظوری کی مکمل تفصیل ہوگی۔</div>' +
+          approvalNote +
+        '</div>' +
+        '<div class="modal-foot">' +
+          '<button type="button" class="btn secondary" data-role="excel-preview-close">واپس جائیں</button>' +
+          '<button type="button" class="btn" id="confirmDownloadBtn">⬇ ایکسل ڈاؤن لوڈ کریں</button>' +
+        '</div>' +
+      '</div>' +
+    '</div>';
+  }
+
+  function monitorPanelHtml(){
+    var list = filledDaysList();
+    var html = '<div class="plain-banner">👁️ یہ صرف نگرانی کا پینل ہے — یہاں سے کوئی ترمیم یا منظوری ممکن نہیں، صرف یہ دیکھا جا سکتا ہے کہ ہر ضلع کا آفس ذمہ دار تصدیق کر رہا ہے یا نہیں۔</div>';
+
+    if(isMonthApproved()){
+      html += '<div class="approve-banner"><span class="big">✅ اس ماہ کا حتمی ریکارڈ تیار ہے</span>' +
+        '<span>ڈویژن ذمہ دار: '+esc(state.division.signedBy)+' · '+fmtDateTime(state.division.signedAt)+' — اوپر "ایکسل پیش منظر دیکھیں" سے حتمی فائل ڈاؤن لوڈ کریں</span></div>';
+    }
+
+    if(!list.length){
+      html += '<div class="plain-banner">اس مہینے کے لیے ابھی کوئی اندراج موجود نہیں ہے۔</div>';
+      return html;
+    }
+
+    var byDistrict = {};
+    list.forEach(function(item){
+      var key = item.e.dayType ? dayTypeLabel(item.e.dayType) : (item.e.district || '— بغیر ضلع —');
+      if(!byDistrict[key]) byDistrict[key] = { total:0, signed:0, pending:0 };
+      byDistrict[key].total++;
+      if(item.status === 'signed') byDistrict[key].signed++; else byDistrict[key].pending++;
+    });
+    var summaryBoxes = Object.keys(byDistrict).map(function(k){
+      var s = byDistrict[k];
+      var ok = s.pending === 0;
+      return '<div class="summary-box" style="background:'+(ok?'var(--green-50)':'var(--gold-100)')+'; border-color:'+(ok?'var(--green-100)':'#ecd9a8')+';">' +
+        '<div class="lbl">'+esc(k)+'</div>' +
+        '<div class="val" style="color:'+(ok?'var(--green-800)':'var(--gold-700)')+'; font-size:15px;">'+s.signed+' / '+s.total+'</div>' +
+      '</div>';
+    }).join('');
+    html += '<div class="card"><h2 class="section-title">ضلع وار تصدیق کا خلاصہ</h2><div class="grid grid-4">'+summaryBoxes+'</div></div>';
+
+    var rows = list.map(function(item){
+      var date = new Date(state.year, state.month-1, item.day);
+      return '<tr class="st-'+item.status+'">' +
+        '<td>'+gregLabel(date)+'</td>' +
+        '<td>'+esc(item.e.dayType ? dayTypeLabel(item.e.dayType) : (item.e.district||'—'))+'</td>' +
+        '<td>'+esc(item.e.officeSignedBy||'—')+'</td>' +
+        '<td>'+(fmtDateTime(item.e.officeSignedAt)||'—')+'</td>' +
+        '<td>'+statusLabel(item.status, item.e.dayType)+'</td>' +
+      '</tr>';
+    }).join('');
+    html += '<div class="card"><h2 class="section-title">تمام اضلاع کی تفصیلی صورتحال</h2>' +
+      '<div class="division-table-wrap"><table class="division-table">' +
+      '<tr><th>تاریخ</th><th>ضلع</th><th>آفس ذمہ دار</th><th>تصدیق کا وقت</th><th>حیثیت</th></tr>' +
+      rows + '</table></div></div>';
+
+    html += subtotalsHtml();
+    return html;
+  }
+
+  function subtotalsHtml(){
+    var subtotals = computeSubtotals();
+    var boxes = FIELD_DEFS.map(function(f){
+      return '<div class="summary-box"><div class="lbl">'+f.label+'</div><div class="val">'+subtotals[f.key]+'</div></div>';
+    }).join('');
+    return '<div class="card"><h2 class="section-title">ماہانہ مجموعی میزان</h2><div class="grid grid-6">'+boxes+'</div></div>';
+  }
+
+  function summaryFormHtml(){
+    var locked = isMonthApproved();
+    var fields = SUMMARY_FIELDS.map(function(f){
+      return '<label class="field"><span>'+f.label+'</span>' +
+        '<input data-role="summary" data-key="'+f.key+'" value="'+esc(state.summary[f.key])+'" '+(locked?'disabled':'')+'></label>';
+    }).join('');
+    return '<div class="card"><h2 class="section-title">ماہ کے آخر کی تفصیلات</h2><div class="grid grid-4">'+fields+'</div></div>';
+  }
+
+  function mainContentHtml(){
+    if(state.role === 'admin') return adminPanelHtml();
+    if(state.role === 'office') return officeQueueHtml();
+    if(state.role === 'division') return divisionPanelHtml();
+    if(state.role === 'monitor') return monitorPanelHtml();
+    return workshopListHtml();
+  }
+
+  function render(){
+    if(!state.configLoaded){
+      document.getElementById('app').innerHTML =
+        '<div class="header"><span class="header-mark">✦ ✦ ✦</span><h1>یومیہ کارکردگی جدول</h1>' +
+        '<p class="header-sub">ورکشاپ ذمہ دار — مدنی عطیات بکس · دعوتِ اسلامی</p><div class="header-rule"></div></div>' +
+        '<div class="loading"><span class="spin"></span> لوڈ ہو رہا ہے...</div>';
+      document.body.style.overflow = '';
+      return;
+    }
+    if(!state.session){
+      document.getElementById('app').innerHTML =
+        '<div class="header"><span class="header-mark">✦ ✦ ✦</span><h1>یومیہ کارکردگی جدول</h1>' +
+        '<p class="header-sub">ورکشاپ ذمہ دار — مدنی عطیات بکس · دعوتِ اسلامی</p><div class="header-rule"></div></div>' +
+        '<div class="card" style="max-width:380px; margin:0 auto;">' +
+          '<h2 class="section-title">پورٹل میں داخل ہوں</h2>' +
+          (state.loginError ? '<div class="reject-note">'+esc(state.loginError)+'</div>' : '') +
+          '<label class="field" style="margin-bottom:10px;"><span>یوزرنیم</span><input id="loginUsername" placeholder="یوزرنیم" autocomplete="username"></label>' +
+          '<label class="field" style="margin-bottom:14px;"><span>پاسورڈ</span><input id="loginPassword" type="password" placeholder="پاسورڈ" autocomplete="current-password"></label>' +
+          '<button type="button" class="btn" id="loginBtn" style="width:100%; justify-content:center;">داخل ہوں</button>' +
+        '</div>';
+      var lu = document.getElementById('loginUsername');
+      var lp = document.getElementById('loginPassword');
+      var lb = document.getElementById('loginBtn');
+      function submitLogin(){ attemptLogin(lu.value, lp.value); }
+      if(lb) lb.addEventListener('click', submitLogin);
+      [lu, lp].forEach(function(inp){ if(inp) inp.addEventListener('keydown', function(e){ if(e.key === 'Enter') submitLogin(); }); });
+      if(lu) lu.focus();
+      document.body.style.overflow = '';
+      return;
+    }
+    var html = '' +
+      '<div class="header">' +
+        '<span class="header-mark">✦ ✦ ✦</span>' +
+        '<h1>یومیہ کارکردگی جدول</h1>' +
+        '<p class="header-sub">ورکشاپ ذمہ دار — مدنی عطیات بکس · دعوتِ اسلامی</p>' +
+        '<div class="header-rule"></div>' +
+      '</div>' +
+      roleSwitchHtml();
+
+    if(state.role === 'admin'){
+      html += mainContentHtml();
+      document.getElementById('app').innerHTML = html;
+      document.body.style.overflow = '';
+      attachEvents();
+      return;
+    }
+
+    html += approveBannerHtml() +
+      (state.role === 'workshop' ? profileCardHtml() : '') +
+      toolbarHtml();
+
+    if(state.loading){
+      html += '<div class="loading"><span class="spin"></span> لوڈ ہو رہا ہے...</div>';
+    } else {
+      html += mainContentHtml();
+    }
+
+    html += entryModalHtml();
+    html += excelPreviewHtml();
+
+    document.getElementById('app').innerHTML = html;
+    document.body.style.overflow = (state.entryModalDay || state.showExcelPreview) ? 'hidden' : '';
+    attachEvents();
+  }
+
+  function closeModal(){ state.entryModalDay = null; render(); }
+  function closeExcelPreview(){ state.showExcelPreview = false; render(); }
+
+  function getSigExisting(dayKey){
+    return dayKey === 'division' ? (state.division.signature || '') : ((state.entries[dayKey] || {}).officeSignature || '');
+  }
+  function setSigValue(dayKey, dataUrl){
+    if(dayKey === 'division'){
+      state.division.signature = dataUrl;
+      state.division.hasSignature = !!dataUrl;
+    } else {
+      if(!state.entries[dayKey]) state.entries[dayKey] = emptyEntry();
+      state.entries[dayKey].officeSignature = dataUrl;
+      state.entries[dayKey].hasSignature = !!dataUrl;
+    }
+    scheduleSave();
+  }
+
+  function setupSignaturePad(canvas, dayKey){
+    var ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.lineWidth = 2.2; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = '#1f2937';
+    var existing = getSigExisting(dayKey);
+    if(existing){
+      var img = new Image();
+      img.onload = function(){ ctx.drawImage(img, 0, 0, canvas.width, canvas.height); };
+      img.src = existing;
+    }
+    var drawing = false, last = null;
+    function pos(evt){
+      var rect = canvas.getBoundingClientRect();
+      return { x:(evt.clientX-rect.left)*(canvas.width/rect.width), y:(evt.clientY-rect.top)*(canvas.height/rect.height) };
+    }
+    canvas.addEventListener('pointerdown', function(evt){
+      drawing = true; last = pos(evt);
+      try{ canvas.setPointerCapture(evt.pointerId); }catch(e){}
+      evt.preventDefault();
+    });
+    canvas.addEventListener('pointermove', function(evt){
+      if(!drawing) return;
+      var p = pos(evt);
+      ctx.beginPath(); ctx.moveTo(last.x,last.y); ctx.lineTo(p.x,p.y); ctx.stroke();
+      last = p; evt.preventDefault();
+    });
+    function endStroke(){
+      if(!drawing) return;
+      drawing = false;
+      setSigValue(dayKey, canvas.toDataURL('image/jpeg', 0.45));
+    }
+    canvas.addEventListener('pointerup', endStroke);
+    canvas.addEventListener('pointerleave', endStroke);
+  }
+
+  function attachEvents(){
+    var monthSel = document.getElementById('monthSel');
+    var yearSel = document.getElementById('yearSel');
+    if(monthSel) monthSel.addEventListener('change', function(){ state.month = Number(this.value); state.entryModalDay = null; loadMonth(); });
+    if(yearSel) yearSel.addEventListener('change', function(){ state.year = Number(this.value); state.entryModalDay = null; loadMonth(); });
+
+    var logoutBtn = document.getElementById('logoutBtn');
+    if(logoutBtn) logoutBtn.addEventListener('click', handleLogout);
+
+    document.querySelectorAll('[data-role="district-field"]').forEach(function(inp){
+      inp.addEventListener('input', function(){
+        var idx = Number(this.getAttribute('data-idx'));
+        state.districts[idx][this.getAttribute('data-key')] = this.value;
+      });
+      inp.addEventListener('change', function(){ scheduleConfigSave(); render(); });
+    });
+    document.querySelectorAll('[data-role="district-remove"]').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        state.districts.splice(Number(this.getAttribute('data-idx')), 1);
+        scheduleConfigSave(); render();
+      });
+    });
+    var addDistrictBtn = document.getElementById('addDistrictBtn');
+    if(addDistrictBtn) addDistrictBtn.addEventListener('click', function(){
+      state.districts.push({ name:'', officer:'', username:'', password:'' });
+      scheduleConfigSave(); render();
+    });
+    document.querySelectorAll('[data-role="account"]').forEach(function(inp){
+      inp.addEventListener('input', function(){ state.settings[this.getAttribute('data-key')] = this.value; });
+      inp.addEventListener('change', function(){ scheduleConfigSave(); render(); });
+    });
+
+    var previewBtn = document.getElementById('previewBtn');
+    if(previewBtn) previewBtn.addEventListener('click', function(){
+      state.showExcelPreview = true; render();
+    });
+    var confirmDlBtn = document.getElementById('confirmDownloadBtn');
+    if(confirmDlBtn) confirmDlBtn.addEventListener('click', function(){ handleDownload(this); });
+    document.querySelectorAll('[data-role="excel-preview-close"]').forEach(function(btn){ btn.addEventListener('click', closeExcelPreview); });
+    var xpOverlay = document.querySelector('[data-role="excel-preview-overlay"]');
+    if(xpOverlay) xpOverlay.addEventListener('click', function(e){ if(e.target === xpOverlay) closeExcelPreview(); });
+
+    document.querySelectorAll('[data-role="open-entry"]').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        state.entryModalDay = Number(this.getAttribute('data-day'));
+        state.entryModalMode = this.getAttribute('data-mode') || 'workshop';
+        render();
+      });
+    });
+    document.querySelectorAll('[data-role="modal-close"], [data-role="modal-save"]').forEach(function(btn){ btn.addEventListener('click', closeModal); });
+    var overlay = document.querySelector('[data-role="modal-overlay"]');
+    if(overlay) overlay.addEventListener('click', function(e){ if(e.target === overlay) closeModal(); });
+
+    document.querySelectorAll('input[data-role="profile"]').forEach(function(inp){
+      inp.addEventListener('input', function(){ state.profile[this.getAttribute('data-key')] = this.value; });
+      inp.addEventListener('change', function(){ scheduleConfigSave(); });
+    });
+
+    var districtInput = document.getElementById('districtInput');
+    if(districtInput) districtInput.addEventListener('change', function(){
+      updateEntry(Number(this.getAttribute('data-day')), 'district', this.value);
+    });
+
+    var dayTypeInput = document.getElementById('dayTypeInput');
+    if(dayTypeInput) dayTypeInput.addEventListener('change', function(){
+      updateEntry(Number(this.getAttribute('data-day')), 'dayType', this.value);
+      render();
+    });
+
+    document.querySelectorAll('input[data-role="entry"]').forEach(function(inp){
+      inp.addEventListener('input', function(){
+        updateEntry(Number(this.getAttribute('data-day')), this.getAttribute('data-key'), this.value);
+      });
+    });
+    document.querySelectorAll('input[data-role="summary"]').forEach(function(inp){
+      inp.addEventListener('input', function(){ updateSummary(this.getAttribute('data-key'), this.value); });
+    });
+
+    var reopenBtn = document.getElementById('reopenEntryBtn');
+    if(reopenBtn) reopenBtn.addEventListener('click', function(){
+      var day = state.entryModalDay;
+      if(!confirm('کیا آپ واقعی اس دن کا اندراج ترمیم کے لیے دوبارہ کھولنا چاہتے ہیں؟ آفس ذمہ دار کو دوبارہ تصدیق کرنی ہوگی۔')) return;
+      var e = state.entries[day];
+      e.officeSignature=''; e.officeSignedBy=''; e.officeSignedAt=''; e.officeNote='';
+      scheduleSave(); render();
+    });
+
+    var confirmSignBtn = document.getElementById('confirmSignBtn');
+    if(confirmSignBtn) confirmSignBtn.addEventListener('click', function(){
+      var day = state.entryModalDay;
+      var e = state.entries[day];
+      var nameInput = document.getElementById('officeSignedByInput');
+      var name = nameInput ? nameInput.value.trim() : '';
+      if(!e || !e.officeSignature){ alert('براہ کرم پہلے دستخط کریں یا دستخط کی تصویر اپلوڈ کریں۔'); return; }
+      if(!name){ alert('براہ کرم آفس ذمہ دار کا نام درج کریں۔'); return; }
+      e.officeSignedBy = name; e.officeSignedAt = new Date().toISOString(); e.officeNote = '';
+      scheduleSave(); closeModal();
+    });
+    var sendBackBtn = document.getElementById('sendBackBtn');
+    if(sendBackBtn) sendBackBtn.addEventListener('click', function(){
+      var day = state.entryModalDay;
+      var e = state.entries[day];
+      var noteInput = document.getElementById('officeNoteInput');
+      var note = noteInput ? noteInput.value.trim() : '';
+      if(!e) return;
+      e.officeSignature=''; e.officeSignedBy=''; e.officeSignedAt='';
+      e.officeNote = note || 'اصلاح درکار ہے، براہ کرم تفصیلات دوبارہ چیک کریں۔';
+      scheduleSave(); closeModal();
+    });
+
+    var divisionApproveBtn = document.getElementById('divisionApproveBtn');
+    if(divisionApproveBtn) divisionApproveBtn.addEventListener('click', function(){
+      if(!monthReadyForDivision()){
+        var pend = pendingDivisionItems();
+        alert('ابھی حتمی منظوری نہیں دی جا سکتی — درج ذیل دنوں کی دفتری تصدیق باقی ہے:\n' + pend.join('\n'));
+        return;
+      }
+      var nameInput = document.getElementById('divisionNameInput');
+      var name = nameInput ? nameInput.value.trim() : '';
+      if(!name){ alert('براہ کرم ڈویژن ذمہ دار کا نام درج کریں۔'); return; }
+      if(!state.division.signature){ alert('براہ کرم پہلے دستخط کریں یا دستخط کی تصویر اپلوڈ کریں۔'); return; }
+      state.division.signedBy = name;
+      state.division.signedAt = new Date().toISOString();
+      scheduleSave(); render();
+    });
+    var revokeBtn = document.getElementById('revokeApprovalBtn');
+    if(revokeBtn) revokeBtn.addEventListener('click', function(){
+      if(!confirm('کیا آپ واقعی اس ماہ کی حتمی منظوری واپس لینا چاہتے ہیں؟')) return;
+      state.division.signedAt = '';
+      scheduleSave(); render();
+    });
+
+    document.querySelectorAll('.sig-pad').forEach(function(canvas){
+      setupSignaturePad(canvas, canvas.getAttribute('data-day') === 'division' ? 'division' : Number(canvas.getAttribute('data-day')));
+    });
+    document.querySelectorAll('.sig-clear').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var dayAttr = this.getAttribute('data-day');
+        var dayKey = dayAttr === 'division' ? 'division' : Number(dayAttr);
+        var canvas = document.querySelector('.sig-pad[data-day="'+dayAttr+'"]');
+        if(canvas){
+          var cctx = canvas.getContext('2d');
+          cctx.fillStyle = '#ffffff';
+          cctx.fillRect(0,0,canvas.width,canvas.height);
+        }
+        setSigValue(dayKey, '');
+      });
+    });
+    document.querySelectorAll('.sig-upload-btn').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var dayAttr = this.getAttribute('data-day');
+        var inp = document.querySelector('.sig-upload-input[data-day="'+dayAttr+'"]');
+        if(inp) inp.click();
+      });
+    });
+    document.querySelectorAll('.sig-upload-input').forEach(function(inp){
+      inp.addEventListener('change', function(){
+        var dayAttr = this.getAttribute('data-day');
+        var dayKey = dayAttr === 'division' ? 'division' : Number(dayAttr);
+        var file = this.files && this.files[0];
+        if(!file) return;
+        var reader = new FileReader();
+        reader.onload = function(ev){
+          var img = new Image();
+          img.onload = function(){
+            var canvas = document.querySelector('.sig-pad[data-day="'+dayAttr+'"]');
+            if(!canvas) return;
+            var ctx = canvas.getContext('2d');
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0,0,canvas.width,canvas.height);
+            var scale = Math.min(canvas.width/img.width, canvas.height/img.height);
+            var w = img.width*scale, h = img.height*scale;
+            ctx.drawImage(img, (canvas.width-w)/2, (canvas.height-h)/2, w, h);
+            setSigValue(dayKey, canvas.toDataURL('image/jpeg', 0.45));
+          };
+          img.src = ev.target.result;
+        };
+        reader.readAsDataURL(file);
+      });
+    });
+  }
+
+  document.addEventListener('keydown', function(e){
+    if(e.key !== 'Escape') return;
+    if(state.showExcelPreview) closeExcelPreview();
+    else if(state.entryModalDay) closeModal();
+  });
+
+  // ---------------- init ----------------
+  (async function init(){
+    render();
+    var guessKey = monthKey(); // year/month are still at their defaults here, before any user interaction
+    var monthRemoteP = fetchFromSheet(guessKey);
+    var monthLocalP = storageGet(guessKey);
+    await loadProfile();
+    render();
+    if(state.session && state.role !== 'admin') await loadMonth(monthRemoteP, monthLocalP);
+    else { state.loading = false; render(); }
+  })();
+
+})();
+</script>
+</body>
+</html>
